@@ -1,28 +1,37 @@
 {
   "name": "Snippy Functions Codespace",
   "dockerFile": "Dockerfile",
+
+  // ── Features ────────────────────────────────────────────────────────────
   "features": {
     "ghcr.io/devcontainers/features/azure-cli:1": {},
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts"
-    }
+    "ghcr.io/devcontainers/features/node:1": { "version": "lts" },
+
+    // Starts Azurite (blob/queue/table) automatically on container boot
+    "ghcr.io/devcontainers/features/azurite:1": {}
   },
-  "forwardPorts": [
-    7071
-  ],
+
+  // ── Port forwards ───────────────────────────────────────────────────────
+  "forwardPorts": [7071, 10000, 10001, 10002],
+
+  // ── Lifecycle commands ──────────────────────────────────────────────────
   "postCreateCommand": "./.devcontainer/setup.sh",
-  "postStartCommand": "bash .devcontainer/start.sh",
+  "postStartCommand":  "bash .devcontainer/start.sh",
+
+  // ── VS Code customisation ───────────────────────────────────────────────
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-azuretools.vscode-azurefunctions",
         "ms-azuretools.vscode-docker",
         "GitHub.copilot",
-        "Azurite.azurite"
+        "Azurite.azurite" // UI & table explorer
       ]
     }
   },
+
+  // ── Misc ────────────────────────────────────────────────────────────────
   "mounts": [
     "source=codespaces-linux-var-lib-docker,target=/var/lib/docker,type=volume"
   ],
@@ -30,8 +39,7 @@
   "remoteUser": "codespace",
   "runArgs": [
     "--cap-add=SYS_PTRACE",
-    "--security-opt",
-    "seccomp=unconfined",
+    "--security-opt", "seccomp=unconfined",
     "--init",
     "--privileged"
   ]
