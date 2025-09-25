@@ -12,7 +12,17 @@
     }
   },
   "extensionBundle": {
-    "id": "Microsoft.Azure.Functions.ExtensionBundle.Experimental",
-    "version": "[4.*, 5.0.0)"
-  }
+    "id": "Microsoft.Azure.Functions.ExtensionBundle.Preview",
+    "version": "[4.0.0, 5.0.0)"
+  },
+  "extensions": {
+    "mcp": {
+      "instructions": "Snippy is an intelligent code snippet service with AI-powered analysis. Available tools: save_snippet (save code with vector embeddings), get_snippet (retrieve saved snippets by name), code_style (generate style guides from snippets), and deep_wiki (create comprehensive documentation). Use save_snippet with 'snippetname' and 'snippet' parameters, optionally include 'projectid'. Retrieve snippets using get_snippet with 'snippetname'. Generate documentation with code_style or deep_wiki, optionally providing 'chathistory' and 'userquery' for context.",
+      "serverName": "Snippy",
+      "serverVersion": "2.0.0",
+      "messageOptions": {
+        "useAbsoluteUriForEndpoint": false
+      }
+    }    
+  }  
 }
