@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/azure-samples-snippy-badge.png)](https://mseep.ai/app/azure-samples-snippy)
+
 <!--
 ---
 name: Snippy - Intelligent Code Snippet Service with MCP Tools
