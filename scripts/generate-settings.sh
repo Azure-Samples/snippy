@@ -21,7 +21,7 @@ cat > src/local.settings.json << EOF
     "COSMOS_CONTAINER_NAME": "code-snippets",
     "BLOB_CONTAINER_NAME": "snippet-backups",
     "EMBEDDING_MODEL_DEPLOYMENT_NAME": "text-embedding-3-small",
-    "AGENTS_MODEL_DEPLOYMENT_NAME": "gpt-4o",
+    "AGENTS_MODEL_DEPLOYMENT_NAME": "gpt-4o-mini",
     "COSMOS_ENDPOINT": "$COSMOS_ENDPOINT",
     "PROJECT_CONNECTION_STRING": "$PROJECT_CONNECTION_STRING",
     "AZURE_OPENAI_ENDPOINT": "$AZURE_OPENAI_ENDPOINT",
