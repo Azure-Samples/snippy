@@ -42,6 +42,7 @@ appsettings.json
 .env
 .env.local
 .env.*.local
+.azure/
 
 __azurite_db_blob__.json
 

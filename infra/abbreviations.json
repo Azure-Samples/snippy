@@ -131,5 +131,7 @@
     "webSitesAppService": "app-",
     "webSitesAppServiceEnvironment": "ase-",
     "webSitesFunctions": "func-",
-    "webStaticSites": "stapp-"
+    "webStaticSites": "stapp-",
+    "dts": "dts-",
+    "taskhub": "taskhub-"
 }

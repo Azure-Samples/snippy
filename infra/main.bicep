@@ -7,7 +7,7 @@ param environmentName string
 
 @minLength(1)
 @description('Primary location for all resources')
-@allowed(['eastus', 'eastus2', 'westus', 'westus2', 'westus3'])
+@allowed(['eastus', 'eastus2', 'westus', 'westus2', 'westus3', 'centraluseaup'])
 @metadata({
   azd: {
     type: 'location'
@@ -15,12 +15,18 @@ param environmentName string
 })
 param location string
 
+@description('Id of the user or app to assign application roles')
+param principalId string = ''
+
 param apiServiceName string = ''
 param apiUserAssignedIdentityName string = ''
 param applicationInsightsName string = ''
 param logAnalyticsName string = ''
 param resourceGroupName string = ''
 param storageAccountName string = ''
+param dtsSkuName string = 'Dedicated'
+param dtsName string = ''
+param taskHubName string = ''
 
 param cosmosDatabaseName string = 'dev-snippet-db'
 param cosmosContainerName string = 'code-snippets'
@@ -132,7 +138,7 @@ module appInsightsRoleAssignmentApi './app/rbac/appinsights-access.bicep' = {
   }
 }
 
-// Azure OpenAI for embeddings
+// Azure OpenAI for chat and embeddings
 module openai './app/ai/cognitive-services.bicep' = {
   name: 'openai'
   scope: rg
@@ -145,8 +151,17 @@ module openai './app/ai/cognitive-services.bicep' = {
   }
 }
 
-
-
+// Assign Cognitive Services OpenAI User role to the managed identity
+var CognitiveServicesOpenAIUser = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+module openaiRoleAssignment 'app/rbac/openai-access.bicep' = {
+  name: 'openaiRoleAssignment'
+  scope: rg
+  params: {
+    openAIAccountName: openai.outputs.aiServicesName
+    roleDefinitionId: CognitiveServicesOpenAIUser
+    principalId: apiUserAssignedIdentity.outputs.principalId
+  }
+}
 
 // Azure Cosmos DB for snippet storage
 module cosmosDb './app/cosmos-db.bicep' = {
@@ -165,36 +180,6 @@ module cosmosDb './app/cosmos-db.bicep' = {
   }
 }
 
-
-// Azure AI Hub and Project for code analysis
-module aiProject './app/ai/ai-project.bicep' = {
-  name: 'aiProject'
-  scope: rg
-  params: {
-    location: regionSelector.getAiServicesRegion(location, chatModelName, embeddingModelName)
-    tags: tags
-    aiHubName: '${abbrs.machineLearningServicesWorkspaces}hub-${resourceToken}'
-    aiProjectName: '${abbrs.machineLearningServicesWorkspaces}proj-${resourceToken}'
-    storageAccountId: storage.outputs.resourceId
-    keyVaultName: '${abbrs.keyVaultVaults}${resourceToken}'
-    aiServicesEndpoint: openai.outputs.aiServicesEndpoint
-    aiServicesId: openai.outputs.aiServicesId
-    aiServicesName: openai.outputs.aiServicesName
-  }
-}
-
-// Allow access from api to AI Project
-var AzureAiDeveloper = '64702f94-c441-49e6-a78b-ef80e0188fee'
-module aiProjectRoleAssignmentApi 'app/rbac/ai-project-access.bicep' = {
-  name: 'aiProjectRoleAssignmentApi'
-  scope: rg
-  params: {
-    aiProjectName: aiProject.outputs.aiProjectName
-    roleDefinitionId: AzureAiDeveloper
-    principalId: apiUserAssignedIdentity.outputs.principalId
-  }
-}
-
 module api './app/api.bicep' = {
   name: 'api'
   scope: rg
@@ -208,26 +193,65 @@ module api './app/api.bicep' = {
     deploymentStorageContainerName: deploymentStorageContainerName
     identityId: apiUserAssignedIdentity.outputs.resourceId
     identityClientId: apiUserAssignedIdentity.outputs.clientId
-    aiServicesId: openai.outputs.aiServicesId
     appSettings: {
       COSMOS_ENDPOINT: cosmosDb.outputs.documentEndpoint
       COSMOS_DATABASE_NAME: cosmosDatabaseName
       COSMOS_CONTAINER_NAME: cosmosContainerName
       BLOB_CONTAINER_NAME: 'snippet-backups'
       EMBEDDING_MODEL_DEPLOYMENT_NAME: openai.outputs.embeddingDeploymentName
-      AGENTS_MODEL_DEPLOYMENT_NAME: 'gpt-4o'
+      AGENTS_MODEL_DEPLOYMENT_NAME: openai.outputs.chatDeploymentName
       COSMOS_VECTOR_TOP_K: '30'
-      PROJECT_CONNECTION_STRING: aiProject.outputs.projectConnectionString
       AZURE_OPENAI_ENDPOINT: openai.outputs.aiServicesEndpoint
       AZURE_CLIENT_ID: apiUserAssignedIdentity.outputs.clientId
+      DTS_CONNECTION_STRING: 'Endpoint=${dts.outputs.dts_URL};Authentication=ManagedIdentity;ClientID=${apiUserAssignedIdentity.outputs.clientId}'
+      TASKHUBNAME: dts.outputs.TASKHUB_NAME
     }
   }
   dependsOn: [
     blobRoleAssignmentApi
     queueRoleAssignmentApi
     appInsightsRoleAssignmentApi
-    aiProjectRoleAssignmentApi
+    openaiRoleAssignment
   ]
+}
+
+// Allow access from durable function to storage account using a user assigned managed identity
+module dtsRoleAssignment 'app/rbac/dts-Access.bicep' = {
+  name: 'dtsRoleAssignment'
+  scope: rg
+  params: {
+   roleDefinitionID: '0ad04412-c4d5-4796-b79c-f76d14c8d402'
+   principalID: apiUserAssignedIdentity.outputs.principalId
+   principalType: 'ServicePrincipal'
+   dtsName: dts.outputs.dts_NAME
+  }
+}
+
+module dtsDashboardRoleAssignment 'app/rbac/dts-Access.bicep' = {
+  name: 'dtsDashboardRoleAssignment'
+  scope: rg
+  params: {
+   roleDefinitionID: '0ad04412-c4d5-4796-b79c-f76d14c8d402'
+   principalID: principalId
+   principalType: 'User'
+   dtsName: dts.outputs.dts_NAME
+  }
+}
+
+module dts './app/dts.bicep' = {
+  scope: rg
+  name: 'dtsResource'
+  params: {
+    name: !empty(dtsName) ? dtsName : '${abbrs.dts}${resourceToken}'
+    taskhubname: !empty(taskHubName) ? taskHubName : '${abbrs.taskhub}${resourceToken}'
+    location: location
+    tags: tags
+    ipAllowlist: [
+      '0.0.0.0/0'
+    ]
+    skuName: dtsSkuName
+    skuCapacity: 1
+  }
 }
 
 // ==================================
@@ -241,15 +265,8 @@ module api './app/api.bicep' = {
 @description('Cosmos DB endpoint. Output name matches the COSMOS_ENDPOINT key in local settings.')
 output COSMOS_ENDPOINT string = cosmosDb.outputs.documentEndpoint
 
-@description('Connection string for the Azure AI Project. Output name matches the PROJECT_CONNECTION_STRING key in local settings.')
-output PROJECT_CONNECTION_STRING string = aiProject.outputs.projectConnectionString
-
 @description('Endpoint for Azure OpenAI services. Output name matches the AZURE_OPENAI_ENDPOINT key in local settings.')
 output AZURE_OPENAI_ENDPOINT string = openai.outputs.azureOpenAIServiceEndpoint
-
-@description('Primary key for Azure OpenAI services. Output name matches the AZURE_OPENAI_KEY key in local settings.')
-// @secure() - issue with latest bicep version, set secure in cognitive services module
-output AZURE_OPENAI_KEY string = openai.outputs.primaryKey
 
 @description('Name of the deployed Azure Function App.')
 output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME // Function App Name

@@ -11,7 +11,6 @@ param instanceMemoryMB int = 2048
 param maximumInstanceCount int = 100
 param identityId string = ''
 param identityClientId string = ''
-param aiServicesId string
 param resourceToken string
 
 param runtimeName string = 'python'
@@ -93,7 +92,6 @@ module api 'br/public:avm/res/web/site:0.15.1' = {
         APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsights.properties.ConnectionString
         APPLICATIONINSIGHTS_AUTHENTICATION_STRING: applicationInsightsIdentity
         AzureWebJobsFeatureFlags: 'EnableWorkerIndexing'
-        AZURE_OPENAI_KEY: listKeys(aiServicesId, '2025-04-01-preview').key1
         PYTHON_ENABLE_WORKER_EXTENSIONS: '1'
       })
     virtualNetworkSubnetId: !empty(virtualNetworkSubnetId) ? virtualNetworkSubnetId : null
