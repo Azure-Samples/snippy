@@ -31,11 +31,15 @@ param taskHubName string = ''
 param cosmosDatabaseName string = 'dev-snippet-db'
 param cosmosContainerName string = 'code-snippets'
 
-@allowed(['gpt-4o'])
-param chatModelName string = 'gpt-4o'
+@allowed(['gpt-4o-mini'])
+param chatModelName string = 'gpt-4o-mini'
 
 @allowed(['text-embedding-3-small'])
 param embeddingModelName string = 'text-embedding-3-small'
+
+param apimServiceName string = ''
+param apimPublisherName string = 'Snippy API'
+param apimPublisherEmail string = 'admin@contoso.com'
 
 import * as regionSelector from './app/util/region-selector.bicep'
 var abbrs = loadJsonContent('./abbreviations.json')
@@ -215,6 +219,21 @@ module api './app/api.bicep' = {
   ]
 }
 
+// API Management service
+module apim './app/apim.bicep' = {
+  name: 'apim'
+  scope: rg
+  params: {
+    name: !empty(apimServiceName) ? apimServiceName : '${abbrs.apiManagementService}${resourceToken}'
+    location: location
+    tags: tags
+    publisherName: apimPublisherName
+    publisherEmail: apimPublisherEmail
+    skuName: 'BasicV2'
+    skuCapacity: 1
+  }
+}
+
 // Allow access from durable function to storage account using a user assigned managed identity
 module dtsRoleAssignment 'app/rbac/dts-Access.bicep' = {
   name: 'dtsRoleAssignment'
@@ -273,3 +292,12 @@ output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME // Function App
 
 @description('Connection string for the Azure Storage Account. Output name matches the AzureWebJobsStorage key in local settings.')
 output AZUREWEBJOBSSTORAGE string = storage.outputs.primaryBlobEndpoint
+
+@description('API Management gateway URL for external API access.')
+output APIM_GATEWAY_URL string = apim.outputs.gatewayUrl
+
+@description('API Management service name.')
+output APIM_SERVICE_NAME string = apim.outputs.apiManagementName
+
+@description('API Management management API URL.')
+output APIM_MANAGEMENT_URL string = apim.outputs.managementApiUrl

@@ -20,7 +20,7 @@ param embeddingModelSkuName string = 'Standard'
 param embeddingModelCapacity int = 100
 
 @description('The chat model name to deploy')
-param chatModelName string = 'gpt-4o'
+param chatModelName string = 'gpt-4o-mini'
 
 @description('The chat model format')
 param chatModelFormat string = 'OpenAI'
@@ -45,7 +45,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = 
   properties: {
     customSubDomainName: toLower(aiServicesName)
     publicNetworkAccess: 'Enabled'
-    disableLocalAuth: true
+    disableLocalAuth: false
   }
 }
 
