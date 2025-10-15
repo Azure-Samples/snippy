@@ -45,6 +45,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = 
   properties: {
     customSubDomainName: toLower(aiServicesName)
     publicNetworkAccess: 'Enabled'
+    disableLocalAuth: true
   }
 }
 
@@ -86,7 +87,4 @@ output aiServicesId string = aiServices.id
 output aiServicesEndpoint string = aiServices.properties.endpoint
 output azureOpenAIServiceEndpoint string = 'https://${aiServices.properties.customSubDomainName}.openai.azure.com/'
 output embeddingDeploymentName string = embeddingModelDeployment.name
-output chatDeploymentName string = chatModelDeployment.name 
-@description('Primary key for the AI Services account.')
-@secure()
-output primaryKey string = aiServices.listKeys().key1
+output chatDeploymentName string = chatModelDeployment.name

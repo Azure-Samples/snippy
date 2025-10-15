@@ -22,6 +22,7 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
   kind: 'GlobalDocumentDB'
   properties: {
     databaseAccountOfferType: 'Standard'
+    disableLocalAuth: true
     capabilities: [
       { name: 'EnableServerless' }
       { name: 'EnableNoSQLVectorSearch' }
