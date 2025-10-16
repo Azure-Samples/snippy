@@ -89,6 +89,7 @@ if ($EXISTING_APP) {
         $SCOPE_ID = [guid]::NewGuid().ToString()
         
         # Step 1: Create the OAuth2 permission scope first
+        $tempFile = [System.IO.Path]::GetTempFileName()
         $scopePayload = @{
             api = @{
                 oauth2PermissionScopes = @(
@@ -104,16 +105,35 @@ if ($EXISTING_APP) {
                     }
                 )
             }
-        } | ConvertTo-Json -Depth 10 -Compress
+        }
+        
+        $scopePayload | ConvertTo-Json -Depth 10 | Set-Content -Path $tempFile -Encoding UTF8
         
         az rest --method PATCH `
             --url "https://graph.microsoft.com/v1.0/applications/$OBJECT_ID" `
             --headers "Content-Type=application/json" `
-            --body $scopePayload | Out-Null
+            --body "@$tempFile" | Out-Null
+        
+        Write-Host "  ✓ Added OAuth2 scope: $SCOPE_NAME" -ForegroundColor Green
+        
+        # Wait a moment for the scope to propagate
+        Start-Sleep -Seconds 2
         
         # Step 2: Add the pre-authorized application
         $preAuthPayload = @{
             api = @{
+                oauth2PermissionScopes = @(
+                    @{
+                        id = $SCOPE_ID
+                        adminConsentDescription = "Allow the application to access the MCP server on your behalf"
+                        adminConsentDisplayName = "Access to Snippy MCP Server"
+                        userConsentDescription = "Allow the application to access the MCP server on your behalf"
+                        userConsentDisplayName = "Access to Snippy MCP Server"
+                        value = $SCOPE_NAME
+                        type = "User"
+                        isEnabled = $true
+                    }
+                )
                 preAuthorizedApplications = @(
                     @{
                         appId = $AUTHORIZED_CLIENT_ID
@@ -121,14 +141,18 @@ if ($EXISTING_APP) {
                     }
                 )
             }
-        } | ConvertTo-Json -Depth 10 -Compress
+        }
+        
+        $preAuthPayload | ConvertTo-Json -Depth 10 | Set-Content -Path $tempFile -Encoding UTF8
         
         az rest --method PATCH `
             --url "https://graph.microsoft.com/v1.0/applications/$OBJECT_ID" `
             --headers "Content-Type=application/json" `
-            --body $preAuthPayload | Out-Null
+            --body "@$tempFile" | Out-Null
         
-        Write-Host "  ✓ OAuth2 scope configured" -ForegroundColor Green
+        Remove-Item $tempFile -ErrorAction SilentlyContinue
+        
+        Write-Host "  ✓ Pre-authorized client: $AUTHORIZED_CLIENT_ID" -ForegroundColor Green
     }
 } else {
     Write-Host "Creating new app registration..."
@@ -152,6 +176,7 @@ if ($EXISTING_APP) {
     $SCOPE_ID = [guid]::NewGuid().ToString()
     
     # Step 1: Create the OAuth2 permission scope first
+    $tempFile = [System.IO.Path]::GetTempFileName()
     $scopePayload = @{
         api = @{
             oauth2PermissionScopes = @(
@@ -167,18 +192,35 @@ if ($EXISTING_APP) {
                 }
             )
         }
-    } | ConvertTo-Json -Depth 10 -Compress
+    }
+    
+    $scopePayload | ConvertTo-Json -Depth 10 | Set-Content -Path $tempFile -Encoding UTF8
     
     az rest --method PATCH `
         --url "https://graph.microsoft.com/v1.0/applications/$OBJECT_ID" `
         --headers "Content-Type=application/json" `
-        --body $scopePayload | Out-Null
+        --body "@$tempFile" | Out-Null
     
     Write-Host "  ✓ Added OAuth2 scope: $SCOPE_NAME" -ForegroundColor Green
     
-    # Step 2: Add the pre-authorized application
+    # Wait a moment for the scope to propagate
+    Start-Sleep -Seconds 2
+    
+    # Step 2: Add the pre-authorized application (must include the scope again to avoid overwriting)
     $preAuthPayload = @{
         api = @{
+            oauth2PermissionScopes = @(
+                @{
+                    id = $SCOPE_ID
+                    adminConsentDescription = "Allow the application to access the MCP server on your behalf"
+                    adminConsentDisplayName = "Access to Snippy MCP Server"
+                    userConsentDescription = "Allow the application to access the MCP server on your behalf"
+                    userConsentDisplayName = "Access to Snippy MCP Server"
+                    value = $SCOPE_NAME
+                    type = "User"
+                    isEnabled = $true
+                }
+            )
             preAuthorizedApplications = @(
                 @{
                     appId = $AUTHORIZED_CLIENT_ID
@@ -186,12 +228,16 @@ if ($EXISTING_APP) {
                 }
             )
         }
-    } | ConvertTo-Json -Depth 10 -Compress
+    }
+    
+    $preAuthPayload | ConvertTo-Json -Depth 10 | Set-Content -Path $tempFile -Encoding UTF8
     
     az rest --method PATCH `
         --url "https://graph.microsoft.com/v1.0/applications/$OBJECT_ID" `
         --headers "Content-Type=application/json" `
-        --body $preAuthPayload | Out-Null
+        --body "@$tempFile" | Out-Null
+    
+    Remove-Item $tempFile -ErrorAction SilentlyContinue
     
     Write-Host "  ✓ Pre-authorized client: $AUTHORIZED_CLIENT_ID" -ForegroundColor Green
     
