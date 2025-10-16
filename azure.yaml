@@ -10,6 +10,17 @@ services:
     host: function
 
 hooks:
+  preprovision:
+    posix:
+      shell: sh
+      run: ./scripts/setup-app-registration.sh
+      interactive: false
+      continueOnError: false
+    windows:
+      shell: pwsh
+      run: ./scripts/setup-app-registration.ps1
+      interactive: false
+      continueOnError: false
   postprovision:
     windows:
       shell: pwsh

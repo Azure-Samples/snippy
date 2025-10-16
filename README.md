@@ -162,18 +162,25 @@ Prerequisites: [Docker Desktop](https://www.docker.com/products/docker-desktop)
 # 1. Clone & init
 azd init --template Azure-Samples/snippy
 
-# 2. Sign in
+# 2. Sign in
 azd auth login
 
 # 3. Provision & deploy
 azd up
 ```
 
-The CLI prints the Function App URL, MCP endpoint and system key when finished. To remove all resources later:
+The CLI will automatically:
+* Create an Azure AD app registration for OAuth authentication
+* Provision all Azure resources (Functions, Cosmos DB, OpenAI, etc.)
+* Deploy the application code
+
+The CLI prints the Function App URL, MCP endpoint and system key when finished. To remove all resources later:
 
 ```bash
 azd down --purge
 ```
+
+> **Note**: The first run automatically creates an Azure AD app registration with OAuth2 scope `access_as_user` for authentication.
 
 ---
 
