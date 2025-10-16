@@ -41,6 +41,12 @@ param apimServiceName string = ''
 param apimPublisherName string = 'Snippy API'
 param apimPublisherEmail string = 'admin@contoso.com'
 
+// App registration parameters - values set by preprovision hook (scripts/setup-app-registration.sh)
+param appRegistrationDisplayName string = ''  // Set automatically: snippy-mcp-server-{resourceToken}
+param appRegistrationClientId string = ''  // Set via 'azd env set APP_REGISTRATION_CLIENT_ID <value>'
+param appRegistrationObjectId string = ''
+param appRegistrationScopeId string = ''   // Set via 'azd env set APP_REGISTRATION_SCOPE_ID <value>'
+
 import * as regionSelector from './app/util/region-selector.bicep'
 var abbrs = loadJsonContent('./abbreviations.json')
 
@@ -234,6 +240,18 @@ module apim './app/apim.bicep' = {
   }
 }
 
+// App Registration for MCP Server
+module appRegistration './app/app-registration.bicep' = if (!empty(appRegistrationClientId) && !empty(appRegistrationScopeId)) {
+  name: 'appRegistration'
+  scope: rg
+  params: {
+    displayName: appRegistrationDisplayName
+    applicationId: appRegistrationClientId
+    objectId: appRegistrationObjectId
+    scopeId: appRegistrationScopeId
+  }
+}
+
 // Allow access from durable function to storage account using a user assigned managed identity
 module dtsRoleAssignment 'app/rbac/dts-Access.bicep' = {
   name: 'dtsRoleAssignment'
@@ -301,3 +319,15 @@ output APIM_SERVICE_NAME string = apim.outputs.apiManagementName
 
 @description('API Management management API URL.')
 output APIM_MANAGEMENT_URL string = apim.outputs.managementApiUrl
+
+@description('App Registration Application ID (Client ID).')
+output APP_REGISTRATION_CLIENT_ID string = !empty(appRegistrationClientId) ? appRegistrationClientId : ''
+
+@description('App Registration Application ID URI.')
+output APP_REGISTRATION_ID_URI string = !empty(appRegistrationClientId) ? 'api://${appRegistrationClientId}' : ''
+
+@description('App Registration Scope ID.')
+output APP_REGISTRATION_SCOPE_ID string = !empty(appRegistrationScopeId) ? appRegistrationScopeId : ''
+
+@description('App Registration Display Name.')
+output APP_REGISTRATION_DISPLAY_NAME string = appRegistrationDisplayName

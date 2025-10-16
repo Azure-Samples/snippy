@@ -10,6 +10,15 @@
     },
     "principalId": {
       "value": "${AZURE_PRINCIPAL_ID}"
+    },
+    "appRegistrationClientId": {
+      "value": "${APP_REGISTRATION_CLIENT_ID=}"
+    },
+    "appRegistrationObjectId": {
+      "value": "${APP_REGISTRATION_OBJECT_ID=}"
+    },
+    "appRegistrationScopeId": {
+      "value": "${APP_REGISTRATION_SCOPE_ID=}"
     }
   }
 }
