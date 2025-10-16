@@ -89,44 +89,16 @@ if ($EXISTING_APP) {
         $SCOPE_ID = [guid]::NewGuid().ToString()
         
         # Step 1: Create the OAuth2 permission scope first
-        $scopePayload = @{
-            api = @{
-                oauth2PermissionScopes = @(
-                    @{
-                        id = $SCOPE_ID
-                        adminConsentDescription = "Allow the application to access the MCP server on your behalf"
-                        adminConsentDisplayName = "Access to Snippy MCP Server"
-                        userConsentDescription = "Allow the application to access the MCP server on your behalf"
-                        userConsentDisplayName = "Access to Snippy MCP Server"
-                        value = $SCOPE_NAME
-                        type = "User"
-                        isEnabled = $true
-                    }
-                )
-            }
-        } | ConvertTo-Json -Depth 10 -Compress
-        
         az rest --method PATCH `
             --url "https://graph.microsoft.com/v1.0/applications/$OBJECT_ID" `
             --headers "Content-Type=application/json" `
-            --body $scopePayload | Out-Null
+            --body "{`"api`":{`"oauth2PermissionScopes`":[{`"id`":`"$SCOPE_ID`",`"adminConsentDescription`":`"Allow the application to access the MCP server on your behalf`",`"adminConsentDisplayName`":`"Access to Snippy MCP Server`",`"userConsentDescription`":`"Allow the application to access the MCP server on your behalf`",`"userConsentDisplayName`":`"Access to Snippy MCP Server`",`"value`":`"$SCOPE_NAME`",`"type`":`"User`",`"isEnabled`":true}]}}" | Out-Null
         
         # Step 2: Add the pre-authorized application
-        $preAuthPayload = @{
-            api = @{
-                preAuthorizedApplications = @(
-                    @{
-                        appId = $AUTHORIZED_CLIENT_ID
-                        delegatedPermissionIds = @($SCOPE_ID)
-                    }
-                )
-            }
-        } | ConvertTo-Json -Depth 10 -Compress
-        
         az rest --method PATCH `
             --url "https://graph.microsoft.com/v1.0/applications/$OBJECT_ID" `
             --headers "Content-Type=application/json" `
-            --body $preAuthPayload | Out-Null
+            --body "{`"api`":{`"preAuthorizedApplications`":[{`"appId`":`"$AUTHORIZED_CLIENT_ID`",`"delegatedPermissionIds`":[`"$SCOPE_ID`"]}]}}" | Out-Null
         
         Write-Host "  ✓ OAuth2 scope configured" -ForegroundColor Green
     }
@@ -152,46 +124,18 @@ if ($EXISTING_APP) {
     $SCOPE_ID = [guid]::NewGuid().ToString()
     
     # Step 1: Create the OAuth2 permission scope first
-    $scopePayload = @{
-        api = @{
-            oauth2PermissionScopes = @(
-                @{
-                    id = $SCOPE_ID
-                    adminConsentDescription = "Allow the application to access the MCP server on your behalf"
-                    adminConsentDisplayName = "Access to Snippy MCP Server"
-                    userConsentDescription = "Allow the application to access the MCP server on your behalf"
-                    userConsentDisplayName = "Access to Snippy MCP Server"
-                    value = $SCOPE_NAME
-                    type = "User"
-                    isEnabled = $true
-                }
-            )
-        }
-    } | ConvertTo-Json -Depth 10 -Compress
-    
     az rest --method PATCH `
         --url "https://graph.microsoft.com/v1.0/applications/$OBJECT_ID" `
         --headers "Content-Type=application/json" `
-        --body $scopePayload | Out-Null
+        --body "{`"api`":{`"oauth2PermissionScopes`":[{`"id`":`"$SCOPE_ID`",`"adminConsentDescription`":`"Allow the application to access the MCP server on your behalf`",`"adminConsentDisplayName`":`"Access to Snippy MCP Server`",`"userConsentDescription`":`"Allow the application to access the MCP server on your behalf`",`"userConsentDisplayName`":`"Access to Snippy MCP Server`",`"value`":`"$SCOPE_NAME`",`"type`":`"User`",`"isEnabled`":true}]}}" | Out-Null
     
     Write-Host "  ✓ Added OAuth2 scope: $SCOPE_NAME" -ForegroundColor Green
     
     # Step 2: Add the pre-authorized application
-    $preAuthPayload = @{
-        api = @{
-            preAuthorizedApplications = @(
-                @{
-                    appId = $AUTHORIZED_CLIENT_ID
-                    delegatedPermissionIds = @($SCOPE_ID)
-                }
-            )
-        }
-    } | ConvertTo-Json -Depth 10 -Compress
-    
     az rest --method PATCH `
         --url "https://graph.microsoft.com/v1.0/applications/$OBJECT_ID" `
         --headers "Content-Type=application/json" `
-        --body $preAuthPayload | Out-Null
+        --body "{`"api`":{`"preAuthorizedApplications`":[{`"appId`":`"$AUTHORIZED_CLIENT_ID`",`"delegatedPermissionIds`":[`"$SCOPE_ID`"]}]}}" | Out-Null
     
     Write-Host "  ✓ Pre-authorized client: $AUTHORIZED_CLIENT_ID" -ForegroundColor Green
     
