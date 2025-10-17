@@ -3,6 +3,18 @@ func getAdjustedRegion(location string, map object) string =>
 
 // See https://learn.microsoft.com/azure/ai-services/openai/concepts/models#model-summary-table-and-region-availability
 var modelRegionMap = {
+  'text-embedding-ada-002': {
+    // Widely available in most Azure OpenAI regions
+    supportedRegions: [
+      'australiaeast', 'brazilsouth', 'canadaeast', 'eastus', 'eastus2', 'francecentral', 'japaneast'
+      'northcentralus', 'norwayeast', 'southcentralus', 'swedencentral', 'switzerlandnorth', 'uksouth', 'westeurope', 'westus'
+    ]
+    overrides: {
+      westus2: 'westus'
+      westus3: 'westus'
+    }
+    default: 'eastus'
+  }
   'text-embedding-3-small': {
     // Currently supported regions: 
     //    Australia East, Canada East, East US, East US 2, Japan East, Switzerland North, UAE North, West US

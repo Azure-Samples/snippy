@@ -3,9 +3,7 @@
 # Get values from azd environment
 echo "Getting environment values from azd..."
 COSMOS_ENDPOINT=$(azd env get-values | grep COSMOS_ENDPOINT | cut -d'"' -f2)
-PROJECT_CONNECTION_STRING=$(azd env get-values | grep PROJECT_CONNECTION_STRING | cut -d'"' -f2)
 AZURE_OPENAI_ENDPOINT=$(azd env get-values | grep AZURE_OPENAI_ENDPOINT | cut -d'"' -f2)
-AZURE_OPENAI_KEY=$(azd env get-values | grep AZURE_OPENAI_KEY | cut -d'"' -f2)
 AZUREWEBJOBSSTORAGE=$(azd env get-values | grep AZUREWEBJOBSSTORAGE | cut -d'"' -f2)
 
 # Create or update local.settings.json
@@ -23,11 +21,15 @@ cat > src/local.settings.json << EOF
     "EMBEDDING_MODEL_DEPLOYMENT_NAME": "text-embedding-3-small",
     "AGENTS_MODEL_DEPLOYMENT_NAME": "gpt-4o-mini",
     "COSMOS_ENDPOINT": "$COSMOS_ENDPOINT",
-    "PROJECT_CONNECTION_STRING": "$PROJECT_CONNECTION_STRING",
-    "AZURE_OPENAI_ENDPOINT": "$AZURE_OPENAI_ENDPOINT",
-    "AZURE_OPENAI_KEY": "$AZURE_OPENAI_KEY"
+    "AZURE_OPENAI_ENDPOINT": "$AZURE_OPENAI_ENDPOINT"
   }
 }
 EOF
 
-echo "local.settings.json generated successfully in src directory!"
+echo ""
+echo "✅ local.settings.json generated successfully!"
+echo ""
+echo "📝 Note: This configuration uses Azure credential authentication (no API key)."
+echo "   - Make sure you're logged in: az login"
+echo "   - You should have been automatically assigned the 'Cognitive Services OpenAI User' role"
+echo "   - If you get authentication errors, verify your role assignment in the Azure Portal"

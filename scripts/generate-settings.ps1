@@ -2,15 +2,14 @@
 
 # Get values from azd environment
 Write-Host "Getting environment values from azd..."
-$azdValues = azd env get-values
-$COSMOS_ENDPOINT = ($azdValues | Select-String 'COSMOS_ENDPOINT="(.*?)"').Matches.Groups[1].Value
-$PROJECT_CONNECTION_STRING = ($azdValues | Select-String 'PROJECT_CONNECTION_STRING="(.*?)"').Matches.Groups[1].Value
-$AZURE_OPENAI_ENDPOINT = ($azdValues | Select-String 'AZURE_OPENAI_ENDPOINT="(.*?)"').Matches.Groups[1].Value
-$AZURE_OPENAI_KEY = ($azdValues | Select-String 'AZURE_OPENAI_KEY="(.*?)"').Matches.Groups[1].Value
-$AZUREWEBJOBSSTORAGE = ($azdValues | Select-String 'AZUREWEBJOBSSTORAGE="(.*?)"').Matches.Groups[1].Value
+$envValues = azd env get-values | Out-String
+$cosmosEndpoint = ($envValues | Select-String 'COSMOS_ENDPOINT="([^"]*)"').Matches.Groups[1].Value
+$azureOpenAIEndpoint = ($envValues | Select-String 'AZURE_OPENAI_ENDPOINT="([^"]*)"').Matches.Groups[1].Value
+$azureWebJobsStorage = ($envValues | Select-String 'AZUREWEBJOBSSTORAGE="([^"]*)"').Matches.Groups[1].Value
 
-# Create the JSON content
-$jsonContent = @"
+# Create or update local.settings.json
+Write-Host "Generating local.settings.json in src directory..."
+$settingsJson = @"
 {
   "IsEncrypted": false,
   "Values": {
@@ -22,16 +21,17 @@ $jsonContent = @"
     "BLOB_CONTAINER_NAME": "snippet-backups",
     "EMBEDDING_MODEL_DEPLOYMENT_NAME": "text-embedding-3-small",
     "AGENTS_MODEL_DEPLOYMENT_NAME": "gpt-4o-mini",
-    "COSMOS_ENDPOINT": "$COSMOS_ENDPOINT",
-    "PROJECT_CONNECTION_STRING": "$PROJECT_CONNECTION_STRING",
-    "AZURE_OPENAI_ENDPOINT": "$AZURE_OPENAI_ENDPOINT",
-    "AZURE_OPENAI_KEY": "$AZURE_OPENAI_KEY"
+    "COSMOS_ENDPOINT": "$cosmosEndpoint",
+    "AZURE_OPENAI_ENDPOINT": "$azureOpenAIEndpoint"
   }
 }
 "@
 
-# Write content to local.settings.json
-$settingsPath = Join-Path (Get-Location) "src" "local.settings.json"
-$jsonContent | Out-File -FilePath $settingsPath -Encoding utf8
-
-Write-Host "local.settings.json generated successfully in src directory!"
+$settingsJson | Out-File -FilePath "src/local.settings.json" -Encoding utf8
+Write-Host ""
+Write-Host "✅ local.settings.json generated successfully!" -ForegroundColor Green
+Write-Host ""
+Write-Host "📝 Note: This configuration uses Azure credential authentication (no API key)." -ForegroundColor Cyan
+Write-Host "   - Make sure you're logged in: az login" -ForegroundColor Cyan
+Write-Host "   - You should have been automatically assigned the 'Cognitive Services OpenAI User' role" -ForegroundColor Cyan
+Write-Host "   - If you get authentication errors, verify your role assignment in the Azure Portal" -ForegroundColor Cyan

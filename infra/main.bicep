@@ -170,6 +170,19 @@ module openaiRoleAssignment 'app/rbac/openai-access.bicep' = {
     openAIAccountName: openai.outputs.aiServicesName
     roleDefinitionId: CognitiveServicesOpenAIUser
     principalId: apiUserAssignedIdentity.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Assign Cognitive Services OpenAI User role to the developer (for local development)
+module openaiRoleAssignmentDeveloper 'app/rbac/openai-access.bicep' = if (!empty(principalId)) {
+  name: 'openaiRoleAssignmentDeveloper'
+  scope: rg
+  params: {
+    openAIAccountName: openai.outputs.aiServicesName
+    roleDefinitionId: CognitiveServicesOpenAIUser
+    principalId: principalId
+    principalType: 'User'
   }
 }
 
@@ -237,7 +250,11 @@ module apim './app/apim.bicep' = {
     publisherEmail: apimPublisherEmail
     skuName: 'BasicV2'
     skuCapacity: 1
+    appRegistrationClientId: appRegistrationClientId
   }
+  dependsOn: [
+    appRegistration
+  ]
 }
 
 // App Registration for MCP Server

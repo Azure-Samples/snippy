@@ -10,8 +10,6 @@
     "EMBEDDING_MODEL_DEPLOYMENT_NAME": "text-embedding-3-small",
     "AGENTS_MODEL_DEPLOYMENT_NAME": "gpt-4o",
     "COSMOS_ENDPOINT": "https://<cosmos-account-name>.documents.azure.com:443/",
-    "PROJECT_CONNECTION_STRING": "<region>.api.azureml.ms;<workspace-id>;<project-name>;<project-name>",
-    "AZURE_OPENAI_ENDPOINT": "https://<service-id>.openai.azure.com/",
-    "AZURE_OPENAI_KEY": "<your-azure-openai-key>"
+    "AZURE_OPENAI_ENDPOINT": "https://<service-id>.openai.azure.com/"
   }
 }
