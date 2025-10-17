@@ -24,6 +24,12 @@ param skuCapacity int = 1
 @allowed(['Enabled', 'Disabled'])
 param publicNetworkAccess string = 'Enabled'
 
+@description('App Registration Client ID for MCP')
+param appRegistrationClientId string = ''
+
+@description('Azure Entra Tenant ID')
+param tenantId string = tenant().tenantId
+
 resource apiManagement 'Microsoft.ApiManagement/service@2023-05-01-preview' = {
   name: name
   location: location
@@ -47,6 +53,36 @@ resource apiManagement 'Microsoft.ApiManagement/service@2023-05-01-preview' = {
   }
   identity: {
     type: 'SystemAssigned'
+  }
+}
+
+// Named Value: APIMGateway - APIM Gateway URL
+resource namedValueAPIMGateway 'Microsoft.ApiManagement/service/namedValues@2023-05-01-preview' = {
+  parent: apiManagement
+  name: 'APIMGateway'
+  properties: {
+    displayName: 'APIMGateway'
+    value: apiManagement.properties.gatewayUrl
+  }
+}
+
+// Named Value: McpClientID - App Registration Client ID
+resource namedValueMcpClientID 'Microsoft.ApiManagement/service/namedValues@2023-05-01-preview' = if (!empty(appRegistrationClientId)) {
+  parent: apiManagement
+  name: 'McpClientID'
+  properties: {
+    displayName: 'McpClientID'
+    value: appRegistrationClientId
+  }
+}
+
+// Named Value: McpTenantID - Azure Entra Tenant ID
+resource namedValueMcpTenantID 'Microsoft.ApiManagement/service/namedValues@2023-05-01-preview' = {
+  parent: apiManagement
+  name: 'McpTenantID'
+  properties: {
+    displayName: 'McpTenantID'
+    value: tenantId
   }
 }
 
