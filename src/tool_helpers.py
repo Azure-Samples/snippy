@@ -16,7 +16,7 @@ class ToolProperty:
         self.propertyType = property_type    # Data type (string, number, etc.)
         self.description = description       # Human-readable description
         
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Converts the property definition to a dictionary format for JSON serialization.
         Required for MCP tool registration.
