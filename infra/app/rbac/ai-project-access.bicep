@@ -1,6 +1,7 @@
 param principalId string
 param roleDefinitionId string
 param aiProjectName string
+param principalType string = 'ServicePrincipal'
 
 resource aiProject 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview' existing = {
   name: aiProjectName
@@ -12,7 +13,7 @@ resource aiProjectRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-0
   properties: {
     principalId: principalId
     roleDefinitionId:  resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitionId)
-    principalType: 'ServicePrincipal'
+    principalType: principalType
   }
 }
 

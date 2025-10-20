@@ -161,7 +161,8 @@ module openai './app/ai/cognitive-services.bicep' = {
   }
 }
 
-// Assign Cognitive Services OpenAI User role to the managed identity
+// Assign Cognitive Services OpenAI User role to the managed identity for OpenAI access
+// This role enables: using chat/embedding models and AI agents through AIServices
 var CognitiveServicesOpenAIUser = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 module openaiRoleAssignment 'app/rbac/openai-access.bicep' = {
   name: 'openaiRoleAssignment'
@@ -225,6 +226,7 @@ module api './app/api.bicep' = {
       AGENTS_MODEL_DEPLOYMENT_NAME: openai.outputs.chatDeploymentName
       COSMOS_VECTOR_TOP_K: '30'
       AZURE_OPENAI_ENDPOINT: openai.outputs.aiServicesEndpoint
+      PROJECT_ENDPOINT: openai.outputs.aiFoundryProjectEndpoint
       AZURE_CLIENT_ID: apiUserAssignedIdentity.outputs.clientId
       DTS_CONNECTION_STRING: 'Endpoint=${dts.outputs.dts_URL};Authentication=ManagedIdentity;ClientID=${apiUserAssignedIdentity.outputs.clientId}'
       TASKHUBNAME: dts.outputs.TASKHUB_NAME
@@ -321,6 +323,9 @@ output COSMOS_ENDPOINT string = cosmosDb.outputs.documentEndpoint
 
 @description('Endpoint for Azure OpenAI services. Output name matches the AZURE_OPENAI_ENDPOINT key in local settings.')
 output AZURE_OPENAI_ENDPOINT string = openai.outputs.azureOpenAIServiceEndpoint
+
+@description('AI Foundry project endpoint for Agent Service. Output name matches the PROJECT_ENDPOINT key in local settings.')
+output PROJECT_ENDPOINT string = openai.outputs.aiFoundryProjectEndpoint
 
 @description('Name of the deployed Azure Function App.')
 output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME // Function App Name

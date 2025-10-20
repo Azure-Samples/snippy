@@ -30,13 +30,13 @@ async def vector_search(query: str, k: int = 30, project_id: str = "default-proj
     logger.info("Starting vector search with query: '%s', k: %d, project_id: %s", query, k, project_id)
     
     # Retrieve required environment variables for authentication and model
-    project_connection_string = os.environ.get("PROJECT_CONNECTION_STRING")
+    project_endpoint = os.environ.get("PROJECT_ENDPOINT")
     model_deployment_name = os.environ.get("EMBEDDING_MODEL_DEPLOYMENT_NAME")
 
     # Validate configuration
-    if not project_connection_string or not model_deployment_name:
-        logger.error("Missing required environment variables. PROJECT_CONNECTION_STRING: %s, EMBEDDING_MODEL_DEPLOYMENT_NAME: %s",
-                    "present" if project_connection_string else "missing",
+    if not project_endpoint or not model_deployment_name:
+        logger.error("Missing required environment variables. PROJECT_ENDPOINT: %s, EMBEDDING_MODEL_DEPLOYMENT_NAME: %s",
+                    "present" if project_endpoint else "missing",
                     "present" if model_deployment_name else "missing")
         raise ValueError("Required environment variables not configured.")
 
@@ -45,10 +45,10 @@ async def vector_search(query: str, k: int = 30, project_id: str = "default-proj
         # Authenticate with Azure using DefaultAzureCredential
         async with DefaultAzureCredential() as credential:
             logger.info("Connecting to AI Project client")
-            # Connect to the AI Project client using the connection string
-            async with AIProjectClient.from_connection_string(
+            # Connect to the AI Project client using the endpoint
+            async with AIProjectClient(
                 credential=credential,
-                conn_str=project_connection_string,
+                endpoint=project_endpoint,
             ) as project_client:
                 logger.info("Creating embeddings client")
                 # Create an embeddings client from the AI project

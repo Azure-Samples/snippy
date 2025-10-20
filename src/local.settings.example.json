@@ -10,6 +10,7 @@
     "EMBEDDING_MODEL_DEPLOYMENT_NAME": "text-embedding-3-small",
     "AGENTS_MODEL_DEPLOYMENT_NAME": "gpt-4o",
     "COSMOS_ENDPOINT": "https://<cosmos-account-name>.documents.azure.com:443/",
-    "AZURE_OPENAI_ENDPOINT": "https://<service-id>.openai.azure.com/"
+    "AZURE_OPENAI_ENDPOINT": "https://<service-id>.openai.azure.com/",
+    "PROJECT_ENDPOINT": "https://<ai-services-name>.services.ai.azure.com/api/projects/<project-name>"
   }
 }
