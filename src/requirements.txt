@@ -1,5 +1,5 @@
 # Azure Functions runtime and core dependencies
-azure-functions
+azure-functions>=1.24.0
 
 # Azure service SDKs
 azure-storage-blob              # For blob storage operations

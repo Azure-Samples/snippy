@@ -24,7 +24,8 @@ $settingsJson = @"
     "AGENTS_MODEL_DEPLOYMENT_NAME": "gpt-4o-mini",
     "COSMOS_ENDPOINT": "$cosmosEndpoint",
     "AZURE_OPENAI_ENDPOINT": "$azureOpenAIEndpoint",
-    "PROJECT_ENDPOINT": "$projectEndpoint"
+    "PROJECT_ENDPOINT": "$projectEndpoint",
+    "PYTHON_ISOLATE_WORKER_DEPENDENCIES": "1"
   }
 }
 "@
