@@ -98,9 +98,9 @@ async def generate_deep_wiki(chat_history: str = "", user_query: str = "") -> st
         async with DefaultAzureCredential() as credential:
             # Connect to the Azure AI Project that hosts our agent
             logger.info("Connecting to Azure AI Project")
-            async with AIProjectClient.from_connection_string(
+            async with AIProjectClient(
                 credential=credential,
-                conn_str=os.environ["PROJECT_CONNECTION_STRING"]
+                endpoint=os.environ["PROJECT_ENDPOINT"]
             ) as project_client:
                 # Create the vector search tool that the agent will use
                 logger.info("Setting up vector search tool")

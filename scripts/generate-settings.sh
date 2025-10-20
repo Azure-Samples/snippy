@@ -4,6 +4,7 @@
 echo "Getting environment values from azd..."
 COSMOS_ENDPOINT=$(azd env get-values | grep COSMOS_ENDPOINT | cut -d'"' -f2)
 AZURE_OPENAI_ENDPOINT=$(azd env get-values | grep AZURE_OPENAI_ENDPOINT | cut -d'"' -f2)
+PROJECT_ENDPOINT=$(azd env get-values | grep PROJECT_ENDPOINT | cut -d'"' -f2)
 AZUREWEBJOBSSTORAGE=$(azd env get-values | grep AZUREWEBJOBSSTORAGE | cut -d'"' -f2)
 
 # Create or update local.settings.json
@@ -21,7 +22,8 @@ cat > src/local.settings.json << EOF
     "EMBEDDING_MODEL_DEPLOYMENT_NAME": "text-embedding-3-small",
     "AGENTS_MODEL_DEPLOYMENT_NAME": "gpt-4o-mini",
     "COSMOS_ENDPOINT": "$COSMOS_ENDPOINT",
-    "AZURE_OPENAI_ENDPOINT": "$AZURE_OPENAI_ENDPOINT"
+    "AZURE_OPENAI_ENDPOINT": "$AZURE_OPENAI_ENDPOINT",
+    "PROJECT_ENDPOINT": "$PROJECT_ENDPOINT"
   }
 }
 EOF

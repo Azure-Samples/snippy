@@ -5,6 +5,7 @@ Write-Host "Getting environment values from azd..."
 $envValues = azd env get-values | Out-String
 $cosmosEndpoint = ($envValues | Select-String 'COSMOS_ENDPOINT="([^"]*)"').Matches.Groups[1].Value
 $azureOpenAIEndpoint = ($envValues | Select-String 'AZURE_OPENAI_ENDPOINT="([^"]*)"').Matches.Groups[1].Value
+$projectEndpoint = ($envValues | Select-String 'PROJECT_ENDPOINT="([^"]*)"').Matches.Groups[1].Value
 $azureWebJobsStorage = ($envValues | Select-String 'AZUREWEBJOBSSTORAGE="([^"]*)"').Matches.Groups[1].Value
 
 # Create or update local.settings.json
@@ -22,7 +23,8 @@ $settingsJson = @"
     "EMBEDDING_MODEL_DEPLOYMENT_NAME": "text-embedding-3-small",
     "AGENTS_MODEL_DEPLOYMENT_NAME": "gpt-4o-mini",
     "COSMOS_ENDPOINT": "$cosmosEndpoint",
-    "AZURE_OPENAI_ENDPOINT": "$azureOpenAIEndpoint"
+    "AZURE_OPENAI_ENDPOINT": "$azureOpenAIEndpoint",
+    "PROJECT_ENDPOINT": "$projectEndpoint"
   }
 }
 "@
