@@ -37,6 +37,9 @@ appsettings.json
 *.swp
 *.swo
 
+# macOS
+.DS_Store
+
 # Local development
 **/repomix-output.xml
 .env
