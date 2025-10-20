@@ -1,6 +1,4 @@
-# =============================================================================
-# HELPER CLASSES
-# =============================================================================
+import json
 
 class ToolProperty:
     """
@@ -38,13 +36,11 @@ class ToolPropertyList:
     """
     def __init__(self, *properties: ToolProperty):
         """
-        Initialize with one or more ToolProperty instances.
+        Initialize with zero or more ToolProperty instances.
         
         Args:
             *properties: Variable number of ToolProperty objects.
         """
-        if not properties:
-            raise ValueError("At least one ToolProperty must be provided")
         self.properties = list(properties)
     
     def to_json(self):
@@ -54,6 +50,5 @@ class ToolPropertyList:
         Returns:
             JSON string containing the serialized properties.
         """
-        import json
         return json.dumps([prop.to_dict() for prop in self.properties])
  
