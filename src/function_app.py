@@ -28,13 +28,14 @@ import logging
 import azure.functions as func
 from data import cosmos_ops  # Module for Cosmos DB operations
 from agents import deep_wiki, code_style  # Modules for AI agent operations
+from tool_helpers import ToolProperty, ToolPropertyList  # Helper classes for tool definitions
 
 # Initialize the Azure Functions app
 # This is the main entry point for all function definitions
 app = func.FunctionApp()
 
 # =============================================================================
-# CONSTANTS AND UTILITY CLASSES
+# CONSTANTS
 # =============================================================================
 
 # Constants for input property names in MCP tool definitions
@@ -45,75 +46,41 @@ _PROJECT_ID_PROPERTY_NAME = "projectid"      # Property name for the project ide
 _CHAT_HISTORY_PROPERTY_NAME = "chathistory"  # Property name for previous chat context
 _USER_QUERY_PROPERTY_NAME = "userquery"      # Property name for the user's specific question
 
-# Utility class to define properties for MCP tools
-# This creates a standardized way to document and validate expected inputs
-class ToolProperty:
-    """
-    Defines a property for an MCP tool, including its name, data type, and description.
-    
-    These properties are used by AI assistants (like GitHub Copilot) to understand:
-    - What inputs each tool expects
-    - What data types those inputs should be
-    - How to describe each input to users
-    
-    This helps the AI to correctly invoke the tool with appropriate parameters.
-    """
-    def __init__(self, property_name: str, property_type: str, description: str):
-        self.propertyName = property_name    # Name of the property
-        self.propertyType = property_type    # Data type (string, number, etc.)
-        self.description = description       # Human-readable description
-        
-    def to_dict(self):
-        """
-        Converts the property definition to a dictionary format for JSON serialization.
-        Required for MCP tool registration.
-        """
-        return {
-            "propertyName": self.propertyName,
-            "propertyType": self.propertyType,
-            "description": self.description,
-        }
-
 # =============================================================================
 # TOOL PROPERTY DEFINITIONS
 # =============================================================================
-# Each MCP tool needs a schema definition to describe its expected inputs
-# This is how AI assistants know what parameters to provide when using these tools
+# Each MCP tool needs a schema definition to describe its expected inputs.
+# This is how AI assistants know what parameters to provide when using these tools.
+# Tool properties are passed to the @app.mcp_tool_trigger decorator via
+# the `tool_properties` parameter (as a JSON-serialized string).
 
 # Properties for the save_snippet tool
 # This tool saves code snippets with their vector embeddings
-tool_properties_save_snippets = [
+tool_properties_save_snippets = ToolPropertyList(
     ToolProperty(_SNIPPET_NAME_PROPERTY_NAME, "string", "A unique name or identifier for the code snippet. Provide this if you have a specific name for the snippet being saved. Essential for identifying the snippet later."),
     ToolProperty(_PROJECT_ID_PROPERTY_NAME, "string", "An identifier for a project to associate this snippet with. Useful for organizing snippets. If omitted or not relevant, it defaults to 'default-project'."),
     ToolProperty(_SNIPPET_PROPERTY_NAME, "string", "The actual code or text content of the snippet. Provide the content that needs to be saved and made searchable."),
-]
+)
 
 # Properties for the get_snippet tool
 # This tool retrieves previously saved snippets by name
-tool_properties_get_snippets = [
+tool_properties_get_snippets = ToolPropertyList(
     ToolProperty(_SNIPPET_NAME_PROPERTY_NAME, "string", "The unique name or identifier of the code snippet you want to retrieve. This is required to fetch a specific snippet."),
-]
+)
 
 # Properties for the deep_wiki tool
 # This tool generates comprehensive documentation from code snippets
-tool_properties_wiki = [
+tool_properties_wiki = ToolPropertyList(
     ToolProperty(_CHAT_HISTORY_PROPERTY_NAME, "string", "Optional. The preceding conversation history (e.g., user prompts and AI responses). Providing this helps contextualize the wiki content generation. Omit if no relevant history exists or if a general wiki is desired."),
     ToolProperty(_USER_QUERY_PROPERTY_NAME, "string", "Optional. The user's specific question, instruction, or topic to focus the wiki documentation on. If omitted, a general wiki covering available snippets might be generated."),
-]
+)
 
 # Properties for the code_style tool
 # This tool generates coding style guides based on existing snippets
-tool_properties_code_style = [
+tool_properties_code_style = ToolPropertyList(
     ToolProperty(_CHAT_HISTORY_PROPERTY_NAME, "string", "Optional. The preceding conversation history (e.g., user prompts and AI responses). This can provide context for the code style analysis or guide generation. Omit if not available or not relevant."),
     ToolProperty(_USER_QUERY_PROPERTY_NAME, "string", "Optional. The user's specific question, instruction, or prompt related to code style. If omitted, a general code style analysis or a default guide might be generated."),
-]
-
-# Convert tool properties to JSON for MCP tool registration
-# This is required format for the MCP tool trigger binding
-tool_properties_save_snippets_json = json.dumps([prop.to_dict() for prop in tool_properties_save_snippets])
-tool_properties_get_snippets_json = json.dumps([prop.to_dict() for prop in tool_properties_get_snippets])
-tool_properties_wiki_json = json.dumps([prop.to_dict() for prop in tool_properties_wiki])
-tool_properties_code_style_json = json.dumps([prop.to_dict() for prop in tool_properties_code_style])
+)
 
 # =============================================================================
 # SAVE SNIPPET FUNCTIONALITY
@@ -133,10 +100,10 @@ async def http_save_snippet(req: func.HttpRequest, embeddings: str) -> func.Http
     - Stores the snippet and its embedding in Cosmos DB
     
     The @app.embeddings_input decorator:
-    - Automatically calls Azure OpenAI before the function runs
+    - Automatically calls Azure OpenAI to generate embeddings before the function runs
     - Extracts 'code' from the request body
     - Generates a vector embedding for that code
-    - Provides the embedding to the function via the 'embeddings' parameter
+    - Passes the embedding to the function via the 'embeddings' parameter
     """
     try:
         # 1. Extract and validate the request body
@@ -192,12 +159,11 @@ async def http_save_snippet(req: func.HttpRequest, embeddings: str) -> func.Http
 
 # MCP tool for saving snippets
 # This is accessible to AI assistants via the MCP protocol
-@app.generic_trigger(
+@app.mcp_tool_trigger(
     arg_name="context",
-    type="mcpToolTrigger",
-    toolName="save_snippet",
+    tool_name="save_snippet",
     description="Saves a given code snippet. It can take a snippet name, the snippet content, and an optional project ID. Embeddings are generated for the content to enable semantic search. The LLM should provide 'snippetname' and 'snippet' when intending to save.",
-    toolProperties=tool_properties_save_snippets_json,
+    tool_properties=tool_properties_save_snippets.to_json(),
 )
 @app.embeddings_input(arg_name="embeddings", input="{arguments.snippet}", input_type="rawText", embeddings_model="%EMBEDDING_MODEL_DEPLOYMENT_NAME%")
 async def mcp_save_snippet(context: str, embeddings: str) -> str:
@@ -210,10 +176,10 @@ async def mcp_save_snippet(context: str, embeddings: str) -> str:
     - Shares the same storage logic with the HTTP endpoint
     
     The difference from the HTTP endpoint:
-    - Receives parameters via the 'context' JSON string instead of HTTP body
-    - Returns results as a JSON string instead of an HTTP response
-    - Uses {arguments.snippet} in the embeddings_input decorator to reference
-      the snippet content from the context arguments
+    - Receives parameters via the 'context' JSON string (containing 'arguments') instead of HTTP body
+    - Returns results as a JSON string instead of an HTTP response object
+    - Uses {arguments.snippet} in the @app.embeddings_input decorator to reference
+      the snippet content from the context's 'arguments' object
     """
     try:
         # 1. Parse the context JSON string to extract the arguments
@@ -301,12 +267,11 @@ async def http_get_snippet(req: func.HttpRequest) -> func.HttpResponse:
 
 # MCP tool for retrieving snippets
 # This is accessible to AI assistants via the MCP protocol
-@app.generic_trigger(
+@app.mcp_tool_trigger(
     arg_name="context",
-    type="mcpToolTrigger",
-    toolName="get_snippet",
+    tool_name="get_snippet",
     description="Retrieves a previously saved code snippet using its unique name. The LLM should provide the 'snippetname' when it intends to fetch a specific snippet.",
-    toolProperties=tool_properties_get_snippets_json,
+    tool_properties=tool_properties_get_snippets.to_json(),
 )
 async def mcp_get_snippet(context) -> str:
     """
@@ -318,8 +283,9 @@ async def mcp_get_snippet(context) -> str:
     - Returns the snippet as a JSON string
     
     The difference from the HTTP endpoint:
-    - Receives the snippet name via the 'context' JSON string instead of URL path
-    - Returns results as a JSON string instead of an HTTP response
+    - Receives the snippet name via the 'context' JSON string (containing 'arguments')
+      instead of from the URL path parameter
+    - Returns results as a JSON string instead of an HTTP response object
     """
     try:
         # 1. Parse the context JSON string to extract the arguments
@@ -400,12 +366,11 @@ async def http_code_style(req: func.HttpRequest) -> func.HttpResponse:
 
 # MCP tool for generating code style guides
 # This is accessible to AI assistants via the MCP protocol
-@app.generic_trigger(
+@app.mcp_tool_trigger(
     arg_name="context",
-    type="mcpToolTrigger",
-    toolName="code_style",
+    tool_name="code_style",
     description="Generates a code style guide. This involves creating content for a new file (e.g., 'code-style-guide.md' to be placed in the workspace root). Optional 'chathistory' and 'userquery' can be supplied to customize or focus the guide; omit them for a general or default style guide.",
-    toolProperties=tool_properties_code_style_json,
+    tool_properties=tool_properties_code_style.to_json(),
 )
 async def mcp_code_style(context) -> str:
     """
@@ -417,8 +382,9 @@ async def mcp_code_style(context) -> str:
     - Returns the generated content as a JSON string
     
     The difference from the HTTP endpoint:
-    - Receives parameters via the 'context' JSON string instead of HTTP body
-    - Returns results as a JSON string instead of an HTTP response
+    - Receives parameters via the 'context' JSON string (containing 'arguments')
+      instead of HTTP body
+    - Returns results as a JSON string instead of an HTTP response object
     """
     try:
         logging.info("MCP: Starting code style content generation")
@@ -496,12 +462,11 @@ async def http_deep_wiki(req: func.HttpRequest) -> func.HttpResponse:
 
 # MCP tool for generating comprehensive wiki documentation
 # This is accessible to AI assistants via the MCP protocol
-@app.generic_trigger(
+@app.mcp_tool_trigger(
     arg_name="context",
-    type="mcpToolTrigger",
-    toolName="deep_wiki",
+    tool_name="deep_wiki",
     description="Creates comprehensive 'deep wiki' documentation. This involves generating content for a new wiki file (e.g., 'deep-wiki.md' to be placed in the workspace root), often by analyzing existing code snippets. Optional 'chathistory' and 'userquery' can be provided to refine or focus the wiki content; omit them for a general wiki.",
-    toolProperties=tool_properties_wiki_json,
+    tool_properties=tool_properties_wiki.to_json(),
 )
 async def mcp_deep_wiki(context) -> str:
     """
@@ -513,9 +478,10 @@ async def mcp_deep_wiki(context) -> str:
     - Returns the generated content as a markdown string
     
     The difference from the HTTP endpoint:
-    - Receives parameters via the 'context' JSON string instead of HTTP body
-    - Returns results directly as a markdown string, not wrapped in JSON
-      (This is an exception to the usual pattern of returning JSON)
+    - Receives parameters via the 'context' JSON string (containing 'arguments')
+      instead of HTTP body
+    - Returns the raw markdown string directly instead of an HTTP response object
+      (This is an exception to the usual pattern of returning JSON-wrapped results)
     """
     try:
         logging.info("MCP: Starting deep wiki content generation")
