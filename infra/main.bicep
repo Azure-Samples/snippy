@@ -24,7 +24,7 @@ param applicationInsightsName string = ''
 param logAnalyticsName string = ''
 param resourceGroupName string = ''
 param storageAccountName string = ''
-param dtsSkuName string = 'Dedicated'
+param dtsSkuName string = 'Consumption'
 param dtsName string = ''
 param taskHubName string = ''
 
@@ -271,6 +271,22 @@ module appRegistration './app/app-registration.bicep' = if (!empty(appRegistrati
   }
 }
 
+// Durable Task Scheduler
+module dts './app/dts.bicep' = {
+  scope: rg
+  name: 'dtsResource'
+  params: {
+    name: !empty(dtsName) ? dtsName : '${abbrs.dts}${resourceToken}'
+    taskhubname: !empty(taskHubName) ? taskHubName : '${abbrs.taskhub}${resourceToken}'
+    location: location
+    tags: tags
+    ipAllowlist: [
+      '0.0.0.0/0'
+    ]
+    skuName: dtsSkuName
+  }
+}
+
 // Allow access from durable function to storage account using a user assigned managed identity
 module dtsRoleAssignment 'app/rbac/dts-Access.bicep' = {
   name: 'dtsRoleAssignment'
@@ -291,22 +307,6 @@ module dtsDashboardRoleAssignment 'app/rbac/dts-Access.bicep' = {
    principalID: principalId
    principalType: 'User'
    dtsName: dts.outputs.dts_NAME
-  }
-}
-
-module dts './app/dts.bicep' = {
-  scope: rg
-  name: 'dtsResource'
-  params: {
-    name: !empty(dtsName) ? dtsName : '${abbrs.dts}${resourceToken}'
-    taskhubname: !empty(taskHubName) ? taskHubName : '${abbrs.taskhub}${resourceToken}'
-    location: location
-    tags: tags
-    ipAllowlist: [
-      '0.0.0.0/0'
-    ]
-    skuName: dtsSkuName
-    skuCapacity: 1
   }
 }
 
