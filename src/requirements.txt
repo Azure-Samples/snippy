@@ -7,6 +7,7 @@ azure-cosmos                    # For Cosmos DB operations
 azure-ai-projects               # For AI project management & agents (includes FunctionTool)
 azure-identity                  # For Azure authentication (DefaultAzureCredential)
 azure-ai-inference              # For the EmbeddingsClient type hint and operations
+openai                          # OpenAI SDK for embeddings via AIProjectClient
 
 # Testing frameworks
 pytest                          # Core testing framework
