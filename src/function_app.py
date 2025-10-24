@@ -83,6 +83,12 @@ tool_properties_code_style = ToolPropertyList(
     ToolProperty(_USER_QUERY_PROPERTY_NAME, "string", "Optional. The user's specific question, instruction, or prompt related to code style. If omitted, a general code style analysis or a default guide might be generated."),
 )
 
+# Properties for the generate_comprehensive_documentation tool
+# This tool coordinates multiple agents to generate complete documentation
+tool_properties_comprehensive_docs = ToolPropertyList(
+    ToolProperty(_USER_QUERY_PROPERTY_NAME, "string", "Optional. A specific query or focus area for the documentation. This can guide the multi-agent orchestration to emphasize particular aspects (e.g., 'Focus on API patterns' or 'Emphasize security best practices'). If omitted, generates comprehensive documentation covering all aspects."),
+)
+
 # =============================================================================
 # SAVE SNIPPET FUNCTIONALITY
 # =============================================================================
@@ -482,6 +488,94 @@ async def mcp_deep_wiki(context) -> str:
         
     except Exception as e:
         logging.error(f"Error in mcp_deep_wiki: {str(e)}", exc_info=True)
+        return json.dumps({"error": str(e)})
+
+# =============================================================================
+# COMPREHENSIVE DOCUMENTATION FUNCTIONALITY
+# =============================================================================
+
+# MCP tool for generating comprehensive documentation via multi-agent orchestration
+# This is accessible to AI assistants via the MCP protocol
+@app.mcp_tool_trigger(
+    arg_name="context",
+    tool_name="generate_comprehensive_documentation",
+    description="Generates comprehensive documentation using multiple AI agents working together in sequence. This orchestration creates both detailed wiki documentation AND a complementary code style guide by coordinating the DeepWiki and CodeStyle agents. Use this when you need complete project documentation that includes architecture, API docs, usage examples, AND coding standards. The optional 'userquery' parameter can focus the documentation on specific topics.",
+    tool_properties=tool_properties_comprehensive_docs.to_json(),
+)
+@app.durable_client_input(client_name="client")
+async def mcp_generate_comprehensive_documentation(context, client) -> str:
+    """
+    MCP tool to generate comprehensive documentation using the documentation_orchestration.
+    
+    This trigger starts a multi-agent orchestration that:
+    1. Uses DeepWiki agent to generate comprehensive wiki documentation
+    2. Refines the wiki with additional details
+    3. Uses CodeStyle agent to generate a complementary style guide
+    
+    The orchestration coordinates the agents in sequence, sharing context between calls.
+    """
+    try:
+        logging.info("MCP: Starting comprehensive documentation generation via orchestration")
+        
+        # Parse the context to extract the user query
+        mcp_data = json.loads(context)
+        args = mcp_data.get("arguments", {})
+        user_query = args.get(_USER_QUERY_PROPERTY_NAME, "Generate comprehensive documentation")
+        
+        # Prepare input for the orchestration
+        orchestration_input = {"query": user_query}
+        
+        # Start the documentation orchestration
+        instance_id = await client.start_new(
+            orchestration_function_name="documentation_orchestration",
+            client_input=orchestration_input
+        )
+        
+        logging.info(f"MCP: Started documentation orchestration with instance_id: {instance_id}")
+        
+        # Wait for the orchestration to complete
+        # Note: For long-running operations, you might want to return the instance_id
+        # and let the user poll for status. For now, we'll wait for completion.
+        import asyncio
+        max_wait_seconds = 300  # 5 minutes timeout
+        poll_interval = 2  # Check every 2 seconds
+        elapsed = 0
+        
+        while elapsed < max_wait_seconds:
+            status = await client.get_status(instance_id)
+            
+            if status.runtime_status.name == "Completed":
+                logging.info(f"MCP: Orchestration completed successfully")
+                return json.dumps({
+                    "success": True,
+                    "wiki": status.output.get("wiki", ""),
+                    "styleGuide": status.output.get("styleGuide", ""),
+                    "message": "Comprehensive documentation generated successfully",
+                    "instanceId": instance_id
+                })
+            elif status.runtime_status.name in ["Failed", "Terminated"]:
+                logging.error(f"MCP: Orchestration failed with status: {status.runtime_status.name}")
+                return json.dumps({
+                    "success": False,
+                    "error": f"Orchestration failed: {status.runtime_status.name}",
+                    "instanceId": instance_id
+                })
+            
+            # Still running, wait and check again
+            await asyncio.sleep(poll_interval)
+            elapsed += poll_interval
+        
+        # Timeout reached
+        logging.warning(f"MCP: Orchestration timed out after {max_wait_seconds} seconds")
+        return json.dumps({
+            "success": False,
+            "error": f"Orchestration timed out after {max_wait_seconds} seconds. Check status at instance ID: {instance_id}",
+            "instanceId": instance_id,
+            "message": "You can check the orchestration status using the HTTP endpoint"
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in mcp_generate_comprehensive_documentation: {str(e)}", exc_info=True)
         return json.dumps({"error": str(e)})
 
 # =============================================================================
