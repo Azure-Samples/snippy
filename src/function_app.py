@@ -16,23 +16,24 @@
 #    - Generates vector embeddings from code snippets
 #    - These embeddings capture the semantic meaning of the code
 #
-# 4. Azure AI Agents - Specialized AI agents for code analysis
+# 4. agent-framework-azurefunctions - Durable AI Agents using Durable Entities
 #    - For generating documentation and style guides from snippets
+#    - Automatic state persistence and conversation history
+#    - Built-in resilience and error handling
 #
-# The application provides two parallel interfaces for the same functionality:
-# - HTTP endpoints for traditional API access
+# The application showcases:
+# - Traditional HTTP endpoints for snippet management
 # - MCP tools for AI assistant integration
+# - Durable Agent endpoints powered by agent-framework-azurefunctions
 
 import json
 import logging
 import azure.functions as func
 from data import cosmos_ops  # Module for Cosmos DB operations
-from agents import deep_wiki, code_style  # Modules for AI agent operations
 from tool_helpers import ToolProperty, ToolPropertyList  # Helper classes for tool definitions
 
-# Initialize the Azure Functions app
-# This is the main entry point for all function definitions
-app = func.FunctionApp()
+# Import the AgentFunctionApp which includes both agents and allows orchestrations
+from agents.durable_agents import app
 
 # =============================================================================
 # CONSTANTS
@@ -321,48 +322,25 @@ async def mcp_get_snippet(context) -> str:
 # =============================================================================
 
 # HTTP endpoint for generating code style guides
-# This is accessible via standard HTTP POST requests
-@app.route(route="snippets/code-style", methods=["POST"], auth_level=func.AuthLevel.FUNCTION)
-async def http_code_style(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    HTTP trigger to generate a code style guide based on saved snippets.
-    
-    Key features:
-    - Takes optional chat history and user query from the request body
-    - Uses AI to analyze saved code snippets
-    - Generates a style guide as markdown content
-    
-    This leverages Azure AI to analyze patterns in the code snippets
-    and generate a coherent style guide that can be saved by the client.
-    """
-    try:
-        logging.info("HTTP: Starting code style content generation")
-        
-        # 1. Extract the request body, defaulting to an empty object if not provided
-        req_body = req.get_json() if req.get_body() else {} 
-        
-        # 2. Extract optional parameters from the request
-        chat_history = req_body.get("chatHistory", "")  # Previous conversation for context
-        user_query = req_body.get("userQuery", "")      # Specific user question or focus
-        
-        # 3. Generate the code style guide using the AI agent
-        # This will analyze saved snippets and generate appropriate content
-        style_guide_content = await code_style.generate_code_style(
-            chat_history=chat_history,
-            user_query=user_query
-        )
-        logging.info("HTTP: Successfully generated code style content")
-        
-        # 4. Return the generated content as a JSON response
-        return func.HttpResponse(
-            body=json.dumps({"styleGuideContent": style_guide_content}), 
-            mimetype="application/json", 
-            status_code=200
-        )
-    except Exception as e:
-        # General error handling with full stack trace
-        logging.error(f"Error in http_code_style: {str(e)}", exc_info=True)
-        return func.HttpResponse(body=json.dumps({"error": str(e)}), mimetype="application/json", status_code=500)
+# NOTE: The following HTTP endpoint for code_style has been replaced
+# by agent-framework-azurefunctions endpoints.
+# Use POST /api/agents/CodeStyleAgent/run instead.
+#
+# # HTTP endpoint for generating code style guides
+# # This is accessible via standard HTTP POST requests
+# @app.route(route="snippets/code-style", methods=["POST"], auth_level=func.AuthLevel.FUNCTION)
+# async def http_code_style(req: func.HttpRequest) -> func.HttpResponse:
+#     ... (commented out - use agent-framework endpoint instead)
+
+# NOTE: The following HTTP and MCP triggers for code_style have been replaced
+# by agent-framework-azurefunctions endpoints above.
+# Use POST /api/agents/CodeStyleAgent/run instead.
+#
+# # HTTP endpoint for generating code style guides
+# # This is accessible via standard HTTP POST requests
+# @app.route(route="snippets/code-style", methods=["POST"], auth_level=func.AuthLevel.FUNCTION)
+# async def http_code_style(req: func.HttpRequest) -> func.HttpResponse:
+#     ... (commented out - use agent-framework endpoint instead)
 
 # MCP tool for generating code style guides
 # This is accessible to AI assistants via the MCP protocol
@@ -374,44 +352,57 @@ async def http_code_style(req: func.HttpRequest) -> func.HttpResponse:
 )
 async def mcp_code_style(context) -> str:
     """
-    MCP tool to generate a code style guide based on saved snippets.
+    MCP tool to generate a code style guide using the CodeStyleAgent.
     
-    Key features:
-    - Receives optional parameters from an AI assistant
-    - Uses the same AI agent as the HTTP endpoint
-    - Returns the generated content as a JSON string
-    
-    The difference from the HTTP endpoint:
-    - Receives parameters via the 'context' JSON string (containing 'arguments')
-      instead of HTTP body
-    - Returns results as a JSON string instead of an HTTP response object
+    This trigger directly invokes the CodeStyleAgent to generate a style guide.
+    The agent uses vector search to find code snippets and analyzes coding patterns.
     """
     try:
-        logging.info("MCP: Starting code style content generation")
+        logging.info("MCP: code_style trigger - invoking CodeStyleAgent directly")
         
-        # 1. Parse the context JSON string to extract the arguments
+        # Import the agent
+        from agents.durable_agents import code_style_agent
+        
+        # Parse the context
         mcp_data = json.loads(context)
         args = mcp_data.get("arguments", {})
         
-        # 2. Extract optional parameters from the arguments
-        chat_history = args.get(_CHAT_HISTORY_PROPERTY_NAME, "")  # Previous conversation for context
-        user_query = args.get(_USER_QUERY_PROPERTY_NAME, "")      # Specific user question or focus
+        # Build message for the agent
+        chat_history = args.get(_CHAT_HISTORY_PROPERTY_NAME, "")
+        user_query = args.get(_USER_QUERY_PROPERTY_NAME, "")
         
-        # 3. Generate the code style guide using the AI agent
-        # Uses the same function as the HTTP endpoint
-        style_guide_content = await code_style.generate_code_style(
-            chat_history=chat_history,
-            user_query=user_query
-        )
-        logging.info("MCP: Successfully generated code style content")
+        if chat_history and user_query:
+            message = f"Context: {chat_history}\n\nQuery: {user_query}"
+        elif user_query:
+            message = user_query
+        else:
+            message = "Generate a comprehensive code style guide based on the code snippets."
         
-        # 4. Return the generated content as a JSON string
-        return json.dumps({"styleGuideContent": style_guide_content})
-    except json.JSONDecodeError:
-        # Handle invalid context JSON
-        return json.dumps({"error": "Invalid JSON received in context"})
+        # Call the agent directly
+        result = await code_style_agent.run(messages=message)
+        
+        # Extract the response text from the last message
+        # result.messages is a list of ChatMessage objects
+        # Each message has a 'contents' list containing TextContent objects
+        # We need to extract the text from the TextContent objects
+        response_text = ""
+        if result.messages:
+            last_message = result.messages[-1]
+            if hasattr(last_message, 'contents') and last_message.contents:
+                # Get text from all content items
+                response_text = "".join(
+                    content.text if hasattr(content, 'text') else str(content)
+                    for content in last_message.contents
+                )
+        
+        logging.info(f"MCP: code_style completed successfully")
+        return json.dumps({
+            "success": True,
+            "style_guide": response_text,
+            "message": "Code style guide generated successfully"
+        })
+        
     except Exception as e:
-        # General error handling with full stack trace
         logging.error(f"Error in mcp_code_style: {str(e)}", exc_info=True)
         return json.dumps({"error": str(e)})
 
@@ -419,46 +410,15 @@ async def mcp_code_style(context) -> str:
 # DEEP WIKI FUNCTIONALITY
 # =============================================================================
 
-# HTTP endpoint for generating comprehensive wiki documentation
-# This is accessible via standard HTTP POST requests
-@app.route(route="snippets/wiki", methods=["POST"], auth_level=func.AuthLevel.FUNCTION)
-async def http_deep_wiki(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    HTTP trigger to generate comprehensive wiki documentation based on saved snippets.
-    
-    Key features:
-    - Takes optional chat history and user query from the request body
-    - Uses AI to analyze saved code snippets
-    - Generates detailed documentation as markdown content
-    
-    This creates interconnected documentation that explains the code snippets
-    and their relationships, suitable for creating a developer wiki.
-    """
-    try:
-        logging.info("HTTP: Starting deep wiki content generation")
-        
-        # 1. Extract the request body, defaulting to an empty object if not provided
-        req_body = req.get_json() if req.get_body() else {} 
-        
-        # 2. Extract optional parameters from the request
-        chat_history = req_body.get("chatHistory", "")  # Previous conversation for context
-        user_query = req_body.get("userQuery", "")      # Specific user question or focus
-        
-        # 3. Generate the wiki documentation using the AI agent
-        # This will analyze saved snippets and generate appropriate content
-        wiki_content = await deep_wiki.generate_deep_wiki(
-            chat_history=chat_history,
-            user_query=user_query
-        )
-        logging.info("HTTP: Successfully generated deep wiki content")
-        
-        # 4. Return the generated content as markdown
-        # Note the mimetype is text/markdown, not application/json
-        return func.HttpResponse(body=wiki_content, mimetype="text/markdown", status_code=200)
-    except Exception as e:
-        # General error handling
-        logging.error(f"Error in http_deep_wiki: {str(e)}")
-        return func.HttpResponse(body=json.dumps({"error": str(e)}), mimetype="application/json", status_code=500)
+# NOTE: The following HTTP endpoint for deep_wiki has been replaced
+# by agent-framework-azurefunctions endpoints above.
+# Use POST /api/agents/DeepWikiAgent/run instead.
+#
+# # HTTP endpoint for generating comprehensive wiki documentation
+# # This is accessible via standard HTTP POST requests
+# @app.route(route="snippets/wiki", methods=["POST"], auth_level=func.AuthLevel.FUNCTION)
+# async def http_deep_wiki(req: func.HttpRequest) -> func.HttpResponse:
+#     ... (commented out - use agent-framework endpoint instead)
 
 # MCP tool for generating comprehensive wiki documentation
 # This is accessible to AI assistants via the MCP protocol
@@ -470,45 +430,69 @@ async def http_deep_wiki(req: func.HttpRequest) -> func.HttpResponse:
 )
 async def mcp_deep_wiki(context) -> str:
     """
-    MCP tool to generate comprehensive wiki documentation based on saved snippets.
+    MCP tool to generate comprehensive wiki documentation using the DeepWikiAgent.
     
-    Key features:
-    - Receives optional parameters from an AI assistant
-    - Uses the same AI agent as the HTTP endpoint
-    - Returns the generated content as a markdown string
-    
-    The difference from the HTTP endpoint:
-    - Receives parameters via the 'context' JSON string (containing 'arguments')
-      instead of HTTP body
-    - Returns the raw markdown string directly instead of an HTTP response object
-      (This is an exception to the usual pattern of returning JSON-wrapped results)
+    This trigger directly invokes the DeepWikiAgent to generate wiki documentation.
+    The agent uses vector search to find code snippets and generates comprehensive documentation.
     """
     try:
-        logging.info("MCP: Starting deep wiki content generation")
+        logging.info("MCP: deep_wiki trigger - invoking DeepWikiAgent directly")
         
-        # 1. Parse the context JSON string to extract the arguments
+        # Import the agent
+        from agents.durable_agents import deep_wiki_agent
+        
+        # Parse the context
         mcp_data = json.loads(context)
         args = mcp_data.get("arguments", {})
-
-        # 2. Extract optional parameters from the arguments
-        chat_history = args.get(_CHAT_HISTORY_PROPERTY_NAME, "")  # Previous conversation for context
-        user_query = args.get(_USER_QUERY_PROPERTY_NAME, "")      # Specific user question or focus
         
-        # 3. Generate the wiki documentation using the AI agent
-        # Uses the same function as the HTTP endpoint
-        wiki_content = await deep_wiki.generate_deep_wiki(
-            chat_history=chat_history,
-            user_query=user_query
-        )
-        logging.info("MCP: Successfully generated deep wiki content")
+        # Build message for the agent
+        chat_history = args.get(_CHAT_HISTORY_PROPERTY_NAME, "")
+        user_query = args.get(_USER_QUERY_PROPERTY_NAME, "")
         
-        # 4. Return the raw markdown content
-        # Note: Unlike other MCP tools, this returns raw markdown, not JSON
-        return wiki_content 
-    except json.JSONDecodeError:
-        # Handle invalid context JSON
-        return json.dumps({"error": "Invalid JSON received in context"})
+        if chat_history and user_query:
+            message = f"Context: {chat_history}\n\nQuery: {user_query}"
+        elif user_query:
+            message = user_query
+        else:
+            message = "Generate comprehensive wiki documentation based on all code snippets."
+        
+        # Call the agent directly
+        result = await deep_wiki_agent.run(messages=message)
+        
+        # Extract the response text from the last message
+        # result.messages is a list of ChatMessage objects
+        # Each message has a 'contents' list containing TextContent objects
+        # We need to extract the text from the TextContent objects
+        response_text = ""
+        if result.messages:
+            last_message = result.messages[-1]
+            if hasattr(last_message, 'contents') and last_message.contents:
+                # Get text from all content items
+                response_text = "".join(
+                    content.text if hasattr(content, 'text') else str(content)
+                    for content in last_message.contents
+                )
+        
+        logging.info(f"MCP: deep_wiki completed successfully")
+        return json.dumps({
+            "success": True,
+            "wiki": response_text,
+            "message": "Wiki documentation generated successfully"
+        })
+        
     except Exception as e:
-        # General error handling
-        logging.error(f"Error in mcp_deep_wiki: {str(e)}")
+        logging.error(f"Error in mcp_deep_wiki: {str(e)}", exc_info=True)
         return json.dumps({"error": str(e)})
+
+# =============================================================================
+# DURABLE AGENT ORCHESTRATIONS
+# =============================================================================
+# The AgentFunctionApp (imported from agents/durable_agents.py) automatically
+# creates HTTP endpoints for direct agent interaction:
+#   - POST /api/agents/DeepWikiAgent/run
+#   - POST /api/agents/CodeStyleAgent/run
+#   - GET /api/health
+#
+# You can also create orchestrations that use agents via context.get_agent()
+# See agents/durable_agents.py for agent definitions
+# =============================================================================

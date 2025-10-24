@@ -23,6 +23,16 @@
       "messageOptions": {
         "useAbsoluteUriForEndpoint": false
       }
-    }    
+    },
+    "durableTask": {
+      "hubName": "SnippyTaskHub",
+      "storageProvider": {
+        "type": "azureStorage",
+        "connectionStringName": "AzureWebJobsStorage"
+      },
+      "tracing": {
+        "traceInputsAndOutputs": true
+      }
+    }
   }  
 }
