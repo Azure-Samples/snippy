@@ -1,6 +1,6 @@
 # Module for vector similarity search tool in Azure AI Projects:
 # - Authenticates via Azure DefaultAzureCredential
-# - Generates text embeddings for the query using Azure AI Inference
+# - Generates text embeddings for the query using Azure OpenAI
 # - Queries Cosmos DB vector index for similar code snippets
 # - Returns results as a JSON string
 import json
@@ -8,7 +8,6 @@ import logging
 import os
 from azure.identity.aio import DefaultAzureCredential
 from azure.ai.projects.aio import AIProjectClient
-from azure.ai.inference.aio import EmbeddingsClient
 from data import cosmos_ops
 
 # Configure logging for this module
@@ -50,12 +49,18 @@ async def vector_search(query: str, k: int = 30, project_id: str = "default-proj
                 credential=credential,
                 endpoint=project_endpoint,
             ) as project_client:
-                logger.info("Creating embeddings client")
-                # Create an embeddings client from the AI project
-                async with await project_client.inference.get_embeddings_client() as embeddings_client:
+                logger.info("Getting Azure OpenAI client")
+                # Get the OpenAI client which supports embeddings
+                # Use latest GA API version for Azure OpenAI data plane inference
+                openai_client = await project_client.get_openai_client(
+                    async_client=True,
+                    api_version="2024-10-21"
+                )
+                
+                try:
                     logger.info("Generating embeddings for query using model: %s", model_deployment_name)
-                    # Generate embeddings for the input query
-                    response = await embeddings_client.embed(
+                    # Generate embeddings for the input query using OpenAI client
+                    response = await openai_client.embeddings.create(
                         model=model_deployment_name,
                         input=[query]
                     )
@@ -80,6 +85,10 @@ async def vector_search(query: str, k: int = 30, project_id: str = "default-proj
 
                     # Return the search results as a JSON string
                     return json.dumps(results)
+                finally:
+                    # Close the OpenAI client to prevent aiohttp session leaks
+                    await openai_client.close()
+                    logger.info("Closed OpenAI client")
 
     except Exception as e:
         # Log any errors and return an error payload
