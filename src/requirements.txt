@@ -4,7 +4,7 @@ azure-functions>=1.24.0
 # Azure service SDKs
 azure-storage-blob              # For blob storage operations
 azure-cosmos                    # For Cosmos DB operations
-azure-ai-projects==1.0.0b10     # For AI project management & getting inference client
+azure-ai-projects               # For AI project management & agents (includes FunctionTool)
 azure-identity                  # For Azure authentication (DefaultAzureCredential)
 azure-ai-inference              # For the EmbeddingsClient type hint and operations
 
