@@ -182,6 +182,59 @@ azd down --purge
 
 > **Note**: The first run automatically creates an Azure AD app registration with OAuth2 scope `access_as_user` for authentication.
 
+### Local Development with Emulators
+
+For local development, Snippy uses the **Durable Task Scheduler (DTS) emulator** and **Azurite** for storage. 
+
+#### With Docker (Recommended)
+
+The easiest way to run both emulators:
+
+```bash
+# Start both emulators
+docker compose up -d
+
+# Generate local.settings.json from your Azure environment
+./scripts/generate-settings.sh
+
+# Run the Functions app
+cd src
+func start
+```
+
+**Available Dashboards:**
+
+* **DTS Dashboard**: <http://localhost:8082/> - Monitor orchestration instances, view execution history
+* **Azurite**: Runs on ports 10000-10002 for Blob, Queue, and Table services
+
+#### Without Docker
+
+If Docker is not available, you can use native Azurite with Azure Storage backend:
+
+```bash
+# 1. Install Azurite globally
+npm install -g azurite
+
+# 2. Switch to Azure Storage backend
+./scripts/switch-storage-backend.sh azureStorage
+
+# 3. Start Azurite in a separate terminal
+azurite
+
+# 4. Generate settings and run
+./scripts/generate-settings.sh
+cd src
+func start
+```
+
+To switch back to DTS when Docker becomes available:
+
+```bash
+./scripts/switch-storage-backend.sh dts
+```
+
+For detailed setup instructions and troubleshooting, see [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md).
+
 ---
 
 ## Guidance

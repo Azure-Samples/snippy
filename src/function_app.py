@@ -516,14 +516,19 @@ async def mcp_generate_comprehensive_documentation(context, client) -> str:
     """
     try:
         logging.info("MCP: Starting comprehensive documentation generation via orchestration")
+        logging.info(f"MCP: client type: {type(client)}, client value: {client}")
         
         # Parse the context to extract the user query
         mcp_data = json.loads(context)
         args = mcp_data.get("arguments", {})
         user_query = args.get(_USER_QUERY_PROPERTY_NAME, "Generate comprehensive documentation")
         
+        logging.info(f"MCP: user_query: {user_query}")
+        
         # Prepare input for the orchestration
         orchestration_input = {"query": user_query}
+        
+        logging.info(f"MCP: About to call client.start_new() with orchestration_input: {orchestration_input}")
         
         # Start the documentation orchestration
         instance_id = await client.start_new(
