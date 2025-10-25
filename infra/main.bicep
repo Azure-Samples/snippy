@@ -229,7 +229,7 @@ module api './app/api.bicep' = {
       PROJECT_ENDPOINT: openai.outputs.aiFoundryProjectEndpoint
       AZURE_CLIENT_ID: apiUserAssignedIdentity.outputs.clientId
       DTS_CONNECTION_STRING: 'Endpoint=${dts.outputs.dts_URL};Authentication=ManagedIdentity;ClientID=${apiUserAssignedIdentity.outputs.clientId}'
-      TASKHUBNAME: dts.outputs.TASKHUB_NAME
+      TASKHUB_NAME: dts.outputs.TASKHUB_NAME
     }
   }
   dependsOn: [
