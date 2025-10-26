@@ -225,11 +225,11 @@ module api './app/api.bicep' = {
       EMBEDDING_MODEL_DEPLOYMENT_NAME: openai.outputs.embeddingDeploymentName
       AGENTS_MODEL_DEPLOYMENT_NAME: openai.outputs.chatDeploymentName
       COSMOS_VECTOR_TOP_K: '30'
-      AZURE_OPENAI_ENDPOINT: openai.outputs.aiServicesEndpoint
+      AZURE_OPENAI_ENDPOINT: openai.outputs.azureOpenAIServiceEndpoint
       PROJECT_ENDPOINT: openai.outputs.aiFoundryProjectEndpoint
       AZURE_CLIENT_ID: apiUserAssignedIdentity.outputs.clientId
       DTS_CONNECTION_STRING: 'Endpoint=${dts.outputs.dts_URL};Authentication=ManagedIdentity;ClientID=${apiUserAssignedIdentity.outputs.clientId}'
-      TASKHUBNAME: dts.outputs.TASKHUB_NAME
+      TASKHUB_NAME: dts.outputs.TASKHUB_NAME
     }
   }
   dependsOn: [

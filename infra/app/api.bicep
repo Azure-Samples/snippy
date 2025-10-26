@@ -76,6 +76,16 @@ module api 'br/public:avm/res/web/site:0.15.1' = {
       scaleAndConcurrency: {
         instanceMemoryMB: instanceMemoryMB
         maximumInstanceCount: maximumInstanceCount
+        alwaysReady: [
+          {
+            name: 'http'
+            instanceCount: 1
+          }
+          {
+            name: 'durable'
+            instanceCount: 1
+          }
+        ]
       }
       runtime: {
         name: runtimeName

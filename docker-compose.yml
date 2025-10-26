@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # Azure Storage Emulator (Azurite)
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: snippy-azurite
+    ports:
+      - "10000:10000"  # Blob service
+      - "10001:10001"  # Queue service
+      - "10002:10002"  # Table service
+    volumes:
+      - azurite-data:/data
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+    restart: unless-stopped
+
+  # Durable Task Scheduler Emulator
+  dts-emulator:
+    image: mcr.microsoft.com/dts/dts-emulator:latest
+    container_name: snippy-dts-emulator
+    ports:
+      - "8080:8080"  # gRPC endpoint for Function App connection
+      - "8082:8082"  # Dashboard UI
+    restart: unless-stopped
+
+volumes:
+  azurite-data:
+    name: snippy-azurite-data
