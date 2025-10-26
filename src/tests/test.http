@@ -6,10 +6,15 @@
 # - Using AI agents to generate wiki documentation and code style guides
 # - Multi-agent orchestrations for comprehensive documentation
 
+### Variables
+@localEndpoint = http://localhost:7071
+@azureEndpoint = https://{your-function-name}.azurewebsites.net
+@endpoint = {{localEndpoint}}
+
 ### Basic Snippet Operations
 
 ### Save a new snippet with projectId
-POST http://localhost:7071/api/snippets
+POST {{endpoint}}/api/snippets
 Content-Type: application/json
 
 {
@@ -19,7 +24,7 @@ Content-Type: application/json
 }
 
 ### Save a new snippet without projectId (will use default)
-POST http://localhost:7071/api/snippets
+POST {{endpoint}}/api/snippets
 Content-Type: application/json
 
 {
@@ -28,12 +33,12 @@ Content-Type: application/json
 }
 
 ### Get a snippet by name
-GET http://localhost:7071/api/snippets/test-snippet
+GET {{endpoint}}/api/snippets/test-snippet
 
 ### Complex Snippet Operations
 
 ### Save a complex snippet with projectId
-POST http://localhost:7071/api/snippets
+POST {{endpoint}}/api/snippets
 Content-Type: application/json
 
 {
@@ -43,7 +48,7 @@ Content-Type: application/json
 }
 
 ### Save a complex snippet without projectId
-POST http://localhost:7071/api/snippets
+POST {{endpoint}}/api/snippets
 Content-Type: application/json
 
 {
@@ -52,7 +57,7 @@ Content-Type: application/json
 }
 
 ### Get the complex snippet
-GET http://localhost:7071/api/snippets/complex-snippet
+GET {{endpoint}}/api/snippets/complex-snippet
 
 ### ============================================================================
 ### Durable Agent Framework Endpoints (agent-framework-azurefunctions)
@@ -61,14 +66,14 @@ GET http://localhost:7071/api/snippets/complex-snippet
 ### and use Durable Entities for stateful agent execution with conversation history
 
 ### Health Check - View all registered agents
-GET http://localhost:7071/api/health
+GET {{endpoint}}/api/health
 
 ### ============================================================================
 ### DeepWiki Agent - Comprehensive Wiki Documentation Generation
 ### ============================================================================
 
 ### Generate wiki with new session (auto-generated sessionId)
-POST http://localhost:7071/api/agents/DeepWikiAgent/run
+POST {{endpoint}}/api/agents/DeepWikiAgent/run
 Content-Type: application/json
 
 {
@@ -76,7 +81,7 @@ Content-Type: application/json
 }
 
 ### Generate wiki with specific session ID
-POST http://localhost:7071/api/agents/DeepWikiAgent/run
+POST {{endpoint}}/api/agents/DeepWikiAgent/run
 Content-Type: application/json
 
 {
@@ -85,7 +90,7 @@ Content-Type: application/json
 }
 
 ### Generate wiki with context and query
-POST http://localhost:7071/api/agents/DeepWikiAgent/run
+POST {{endpoint}}/api/agents/DeepWikiAgent/run
 Content-Type: application/json
 
 {
@@ -94,7 +99,7 @@ Content-Type: application/json
 }
 
 ### Continue conversation in existing session
-POST http://localhost:7071/api/agents/DeepWikiAgent/run
+POST {{endpoint}}/api/agents/DeepWikiAgent/run
 Content-Type: application/json
 
 {
@@ -103,14 +108,14 @@ Content-Type: application/json
 }
 
 ### Retrieve conversation history for a session
-GET http://localhost:7071/api/agents/DeepWikiAgent/wiki-session-002
+GET {{endpoint}}/api/agents/DeepWikiAgent/wiki-session-002
 
 ### ============================================================================
 ### CodeStyle Agent - Code Style Guide Generation
 ### ============================================================================
 
 ### Generate code style guide with new session
-POST http://localhost:7071/api/agents/CodeStyleAgent/run
+POST {{endpoint}}/api/agents/CodeStyleAgent/run
 Content-Type: application/json
 
 {
@@ -118,7 +123,7 @@ Content-Type: application/json
 }
 
 ### Generate code style guide with specific session ID
-POST http://localhost:7071/api/agents/CodeStyleAgent/run
+POST {{endpoint}}/api/agents/CodeStyleAgent/run
 Content-Type: application/json
 
 {
@@ -127,7 +132,7 @@ Content-Type: application/json
 }
 
 ### Generate focused style guide
-POST http://localhost:7071/api/agents/CodeStyleAgent/run
+POST {{endpoint}}/api/agents/CodeStyleAgent/run
 Content-Type: application/json
 
 {
@@ -136,7 +141,7 @@ Content-Type: application/json
 }
 
 ### Ask follow-up question in existing session
-POST http://localhost:7071/api/agents/CodeStyleAgent/run
+POST {{endpoint}}/api/agents/CodeStyleAgent/run
 Content-Type: application/json
 
 {
@@ -145,14 +150,14 @@ Content-Type: application/json
 }
 
 ### Retrieve conversation history for code style session
-GET http://localhost:7071/api/agents/CodeStyleAgent/style-session-002
+GET {{endpoint}}/api/agents/CodeStyleAgent/style-session-002
 
 ### ============================================================================
 ### Advanced Agent Testing Scenarios
 ### ============================================================================
 
 ### Test agent with tool calling (vector search)
-POST http://localhost:7071/api/agents/DeepWikiAgent/run
+POST {{endpoint}}/api/agents/DeepWikiAgent/run
 Content-Type: application/json
 
 {
@@ -161,7 +166,7 @@ Content-Type: application/json
 }
 
 ### Test multi-turn conversation
-POST http://localhost:7071/api/agents/CodeStyleAgent/run
+POST {{endpoint}}/api/agents/CodeStyleAgent/run
 Content-Type: application/json
 
 {
@@ -170,7 +175,7 @@ Content-Type: application/json
 }
 
 ### Follow-up in multi-turn conversation
-POST http://localhost:7071/api/agents/CodeStyleAgent/run
+POST {{endpoint}}/api/agents/CodeStyleAgent/run
 Content-Type: application/json
 
 {
@@ -179,7 +184,7 @@ Content-Type: application/json
 }
 
 ### Check the full conversation
-GET http://localhost:7071/api/agents/CodeStyleAgent/multi-turn-001
+GET {{endpoint}}/api/agents/CodeStyleAgent/multi-turn-001
 
 ### ============================================================================
 ### Multi-Agent Orchestration
@@ -188,7 +193,7 @@ GET http://localhost:7071/api/agents/CodeStyleAgent/multi-turn-001
 ### in sequence, sharing context between calls
 
 ### Start documentation orchestration
-POST http://localhost:7071/api/orchestration/documentation
+POST {{endpoint}}/api/orchestration/documentation
 Content-Type: application/json
 
 {
@@ -196,14 +201,14 @@ Content-Type: application/json
 }
 
 ### Check orchestration status (replace {instanceId} with actual ID from above response)
-GET http://localhost:7071/api/orchestration/status/{instanceId}
+GET {{endpoint}}/api/orchestration/status/{instanceId}
 
 ### ============================================================================
 ### Real-World Testing Scenarios
 ### ============================================================================
 
 ### Save a Python Azure Function snippet
-POST http://localhost:7071/api/snippets
+POST {{endpoint}}/api/snippets
 Content-Type: application/json
 
 {
@@ -213,7 +218,7 @@ Content-Type: application/json
 }
 
 ### Save a vector search snippet
-POST http://localhost:7071/api/snippets
+POST {{endpoint}}/api/snippets
 Content-Type: application/json
 
 {
@@ -223,7 +228,7 @@ Content-Type: application/json
 }
 
 ### Generate wiki for all Python snippets
-POST http://localhost:7071/api/agents/DeepWikiAgent/run
+POST {{endpoint}}/api/agents/DeepWikiAgent/run
 Content-Type: application/json
 
 {
@@ -232,7 +237,7 @@ Content-Type: application/json
 }
 
 ### Generate targeted style guide for async code
-POST http://localhost:7071/api/agents/CodeStyleAgent/run
+POST {{endpoint}}/api/agents/CodeStyleAgent/run
 Content-Type: application/json
 
 {
