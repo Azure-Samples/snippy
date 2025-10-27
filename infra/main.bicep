@@ -230,6 +230,9 @@ module api './app/api.bicep' = {
       AZURE_CLIENT_ID: apiUserAssignedIdentity.outputs.clientId
       DTS_CONNECTION_STRING: 'Endpoint=${dts.outputs.dts_URL};Authentication=ManagedIdentity;ClientID=${apiUserAssignedIdentity.outputs.clientId}'
       TASKHUB_NAME: dts.outputs.TASKHUB_NAME
+      // Override host.json durableTask storageProvider for Azure (use DTS instead of azureStorage)
+      'AzureFunctionsJobHost__extensions__durableTask__storageProvider__type': 'azureManaged'
+      'AzureFunctionsJobHost__extensions__durableTask__storageProvider__connectionStringName': 'DTS_CONNECTION_STRING'
     }
   }
   dependsOn: [
