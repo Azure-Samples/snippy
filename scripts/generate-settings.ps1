@@ -7,13 +7,6 @@ $cosmosEndpoint = ($envValues | Select-String 'COSMOS_ENDPOINT="([^"]*)"').Match
 $azureOpenAIEndpoint = ($envValues | Select-String 'AZURE_OPENAI_ENDPOINT="([^"]*)"').Matches.Groups[1].Value
 $projectEndpoint = ($envValues | Select-String 'PROJECT_ENDPOINT="([^"]*)"').Matches.Groups[1].Value
 $azureWebJobsStorage = ($envValues | Select-String 'AZUREWEBJOBSSTORAGE="([^"]*)"').Matches.Groups[1].Value
-$dtsUrl = ($envValues | Select-String 'DTS_URL="([^"]*)"').Matches.Groups[1].Value
-$taskhubName = ($envValues | Select-String 'TASKHUB_NAME="([^"]*)"').Matches.Groups[1].Value
-
-# Use default taskhub name if not found
-if ([string]::IsNullOrEmpty($taskhubName)) {
-    $taskhubName = "SnippyTaskHub"
-}
 
 # Create or update local.settings.json
 Write-Host "Generating local.settings.json in src directory..."
