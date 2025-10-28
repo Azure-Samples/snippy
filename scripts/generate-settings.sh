@@ -6,8 +6,6 @@ COSMOS_ENDPOINT=$(azd env get-values | grep COSMOS_ENDPOINT | cut -d'"' -f2)
 AZURE_OPENAI_ENDPOINT=$(azd env get-values | grep AZURE_OPENAI_ENDPOINT | cut -d'"' -f2)
 PROJECT_ENDPOINT=$(azd env get-values | grep PROJECT_ENDPOINT | cut -d'"' -f2)
 AZUREWEBJOBSSTORAGE=$(azd env get-values | grep AZUREWEBJOBSSTORAGE | cut -d'"' -f2)
-DTS_URL=$(azd env get-values | grep DTS_URL | cut -d'"' -f2)
-TASKHUB_NAME=$(azd env get-values | grep TASKHUB_NAME | cut -d'"' -f2)
 
 # Create or update local.settings.json
 echo "Generating local.settings.json in src directory..."
