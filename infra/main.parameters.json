@@ -11,6 +11,9 @@
     "principalId": {
       "value": "${AZURE_PRINCIPAL_ID}"
     },
+    "nameSuffix": {
+      "value": "${NAME_SUFFIX=}"
+    },
     "appRegistrationClientId": {
       "value": "${APP_REGISTRATION_CLIENT_ID=}"
     },
