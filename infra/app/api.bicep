@@ -12,6 +12,7 @@ param maximumInstanceCount int = 100
 param identityId string = ''
 param identityClientId string = ''
 param resourceToken string
+param actualSuffix string
 
 param runtimeName string = 'python'
 param runtimeVersion string = '3.11'
@@ -28,7 +29,7 @@ var applicationInsightsIdentity = 'ClientId=${identityClientId};Authorization=AA
 module appServicePlan 'br/public:avm/res/web/serverfarm:0.1.1' = {
   name: 'appserviceplan'
   params: {
-    name: '${abbrs.webServerFarms}${resourceToken}'
+    name: '${abbrs.webServerFarms}${resourceToken}-${actualSuffix}'
     location: regionSelector.getFlexConsumptionRegion(location)
     tags: tags
     sku: {

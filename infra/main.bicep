@@ -15,6 +15,9 @@ param environmentName string
 })
 param location string
 
+@description('Optional numeric suffix for resource names (e.g., 56093778). Auto-generated if not provided.')
+param nameSuffix string = ''
+
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
 
@@ -50,16 +53,22 @@ param appRegistrationScopeId string = ''   // Set via 'azd env set APP_REGISTRAT
 import * as regionSelector from './app/util/region-selector.bicep'
 var abbrs = loadJsonContent('./abbreviations.json')
 
-var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
+// Auto-generate suffix if not provided
+var autoSuffix = toLower(take(uniqueString(subscription().id, environmentName, location), 8))
+var actualSuffix = !empty(nameSuffix) ? nameSuffix : autoSuffix
+
+// Base name for all resources
+var resourceToken = 'snippymcplab'
+
 var tags = { 'azd-env-name': environmentName }
-var functionAppName = !empty(apiServiceName) ? apiServiceName : '${abbrs.webSitesFunctions}api-${resourceToken}'
+var functionAppName = !empty(apiServiceName) ? apiServiceName : '${abbrs.webSitesFunctions}api-${resourceToken}-${actualSuffix}'
 var deploymentStorageContainerName = 'app-package-${take(functionAppName, 32)}-${take(toLower(uniqueString(functionAppName, resourceToken)), 7)}'
 
-var storageAccountActualName = !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
+var storageAccountActualName = !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}${actualSuffix}'
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}'
+  name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}-${resourceToken}-${actualSuffix}'
   location: location
   tags: tags
 }
@@ -71,7 +80,7 @@ module apiUserAssignedIdentity 'br/public:avm/res/managed-identity/user-assigned
   params: {
     location: location
     tags: tags
-    name: !empty(apiUserAssignedIdentityName) ? apiUserAssignedIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}api-${resourceToken}'
+    name: !empty(apiUserAssignedIdentityName) ? apiUserAssignedIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}api-${resourceToken}-${actualSuffix}'
   }
 }
 
@@ -130,8 +139,8 @@ module monitoring 'app/monitoring.bicep' = {
   params: {
     location: location
     tags: tags
-    logAnalyticsName: !empty(logAnalyticsName) ? logAnalyticsName : '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
-    applicationInsightsName: !empty(applicationInsightsName) ? applicationInsightsName : '${abbrs.insightsComponents}${resourceToken}'
+    logAnalyticsName: !empty(logAnalyticsName) ? logAnalyticsName : '${abbrs.operationalInsightsWorkspaces}${resourceToken}-${actualSuffix}'
+    applicationInsightsName: !empty(applicationInsightsName) ? applicationInsightsName : '${abbrs.insightsComponents}${resourceToken}-${actualSuffix}'
   }
 }
 
@@ -156,7 +165,7 @@ module openai './app/ai/cognitive-services.bicep' = {
     location: regionSelector.getAiServicesRegion(location, chatModelName, embeddingModelName)
     tags: tags
     chatModelName: chatModelName
-    aiServicesName: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    aiServicesName: '${abbrs.cognitiveServicesAccounts}${resourceToken}-${actualSuffix}'
     embeddingModelName: embeddingModelName
   }
 }
@@ -194,7 +203,7 @@ module cosmosDb './app/cosmos-db.bicep' = {
   params: { 
     location: location
     tags: tags
-    accountName: '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
+    accountName: '${abbrs.documentDBDatabaseAccounts}${resourceToken}-${actualSuffix}'
     databaseName: cosmosDatabaseName
     containerName: cosmosContainerName
     dataContributorIdentityIds: [
@@ -212,6 +221,7 @@ module api './app/api.bicep' = {
     location: regionSelector.getFlexConsumptionRegion(location)
     tags: tags
     resourceToken: resourceToken
+    actualSuffix: actualSuffix
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     storageAccountName: storage.outputs.name
     deploymentStorageContainerName: deploymentStorageContainerName
@@ -248,7 +258,7 @@ module apim './app/apim.bicep' = {
   name: 'apim'
   scope: rg
   params: {
-    name: !empty(apimServiceName) ? apimServiceName : '${abbrs.apiManagementService}${resourceToken}'
+    name: !empty(apimServiceName) ? apimServiceName : '${abbrs.apiManagementService}${resourceToken}-${actualSuffix}'
     location: location
     tags: tags
     publisherName: apimPublisherName
@@ -279,8 +289,8 @@ module dts './app/dts.bicep' = {
   scope: rg
   name: 'dtsResource'
   params: {
-    name: !empty(dtsName) ? dtsName : '${abbrs.dts}${resourceToken}'
-    taskhubname: !empty(taskHubName) ? taskHubName : '${abbrs.taskhub}${resourceToken}'
+    name: !empty(dtsName) ? dtsName : '${abbrs.dts}${resourceToken}-${actualSuffix}'
+    taskhubname: !empty(taskHubName) ? taskHubName : '${abbrs.taskhub}${resourceToken}${actualSuffix}'
     location: location
     tags: tags
     ipAllowlist: [
