@@ -27,8 +27,8 @@
     "durableTask": {
       "hubName": "%TASKHUB_NAME%",
       "storageProvider": {
-        "type": "azureStorage",
-        "connectionStringName": "AzureWebJobsStorage"
+        "type": "azureManaged",
+        "connectionStringName": "DTS_CONNECTION_STRING"
       },
       "tracing": {
         "traceInputsAndOutputs": true
