@@ -103,3 +103,26 @@ var flexConsumptionRegionMap = {
 @export()
 @description('Based on an intended region, gets a supported region for Flex Consumption.')
 func getFlexConsumptionRegion(location string) string => getAdjustedRegion(location, flexConsumptionRegionMap)
+
+// See https://learn.microsoft.com/en-us/azure/api-management/api-management-region-availability#supported-regions-for-v2-tiers-and-workspace-gateways
+// Currently supported regions for BasicV2:
+//    Australia Central, Australia East, Australia Southeast, Brazil South, Canada Central, Central India, Central US,
+//    East Asia, East US, East US 2, France Central, Germany West Central, Italy North, Japan East, Korea Central,
+//    North Central US, North Europe, Norway East, South Africa North, South Central US, South India, Sweden Central,
+//    Switzerland North, UAE North, UK South, UK West, West Europe, West US, West US 2
+var apimBasicV2RegionMap = {
+  supportedRegions: [
+    'australiacentral', 'australiaeast', 'australiasoutheast', 'brazilsouth', 'canadacentral', 'centralindia', 'centralus'
+    'eastasia', 'eastus', 'eastus2', 'francecentral', 'germanywestcentral', 'italynorth', 'japaneast', 'koreacentral'
+    'northcentralus', 'northeurope', 'norwayeast', 'southafricanorth', 'southcentralus', 'southindia', 'swedencentral'
+    'switzerlandnorth', 'uaenorth', 'uksouth', 'ukwest', 'westeurope', 'westus', 'westus2'
+  ]
+  overrides: {
+    westus3: 'westus2'
+  }
+  default: 'westus2'
+}
+
+@export()
+@description('Based on an intended region, gets a supported region for API Management BasicV2 SKU.')
+func getApimBasicV2Region(location string) string => getAdjustedRegion(location, apimBasicV2RegionMap)

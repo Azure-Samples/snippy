@@ -259,7 +259,7 @@ module apim './app/apim.bicep' = {
   scope: rg
   params: {
     name: !empty(apimServiceName) ? apimServiceName : '${abbrs.apiManagementService}${resourceToken}-${actualSuffix}'
-    location: location
+    location: regionSelector.getApimBasicV2Region(location)
     tags: tags
     publisherName: apimPublisherName
     publisherEmail: apimPublisherEmail
