@@ -58,7 +58,7 @@ The project ships with reproducible **azd** infrastructure, so `azd up` will sta
 
 ## Features
 
-* **MCP Tool Integration** – expose Azure Functions as discoverable MCP tools for AI assistants via SSE protocol
+* **MCP Tool Integration** – expose Azure Functions as discoverable MCP tools for AI assistants
 * **Durable Agents with Microsoft Agent Framework** – build stateful AI agents using `ChatAgent` with automatic conversation history management
 * **Multi-Agent Orchestration** – coordinate specialized agents (DeepWiki, CodeStyle) using Durable Task Scheduler with fan-out/fan-in patterns
 * **Vector Search on Cosmos DB DiskANN** – semantic code retrieval using Azure OpenAI embeddings and low-latency vector indexing
@@ -79,8 +79,6 @@ The project ships with reproducible **azd** infrastructure, so `azd up` will sta
 ---
 
 ### Architecture Diagram
-
-![Snippy Architecture](https://raw.githubusercontent.com/Azure-Samples/snippy/main/.github/assets/snippy-architecture.png)
 
 ```mermaid
 flowchart LR
