@@ -82,42 +82,42 @@ The project ships with reproducible **azd** infrastructure, so `azd up` will sta
 
 ```mermaid
 flowchart LR
-    %% ─── MCP Hosts & Clients (local) ──────────────────────────────
-    subgraph mcphosts["MCP Hosts & Clients (Your Computer)"]
-        Host["Host<br/>(VS Code / IDE)"]
-        Client["Client<br/>(GitHub Copilot)"]
+    %% MCP Clients
+    subgraph clients["MCP Clients"]
+        Host["Host<br/>(VS Code / IDE)"]
+        Copilot["GitHub Copilot"]
     end
 
-    %% ─── Application on Azure (remote) ────────────────────────────
-    subgraph app["Application (Azure)"]
-        Snippy["MCP Server<br/>Snippy Triggers<br/>(Function App)"]:::dashed
-        Foundry["Foundry Agent<br/>Deep Wiki · Code Style"]
-        Cosmos["Cosmos DB<br/>Operational + Vector DB"]:::datasource
-        AOAI["Azure OpenAI<br/>text‑embedding‑3‑small"]
-        FabricDA["Fabric – Data Agent"]
-        VectorTool["Tools – Vector Search"]
+    %% Azure Functions & Services
+    subgraph azure["Azure"]
+        subgraph functions["Azure Functions (MCP Server)"]
+            MCPTools["MCP Tools<br/>(save_snippet, get_snippet, etc.)"]
+            DTS["Durable Task Scheduler<br/>(Orchestration)"]
+        end
+        
+        Agents["Durable Agents<br/>(DeepWiki · CodeStyle)"]
+        VectorTool["Vector Search Tool"]
+        Cosmos["Cosmos DB<br/>(Vector + Operational)"]
+        OpenAI["Azure OpenAI<br/>(Embeddings + LLM)"]
     end
 
-    %% ─── Local interactions ───────────────────────────────────────
-    Host <--> Client
+    %% Connections
+    Host <--> Copilot
+    Copilot <-- "MCP Protocol (SSE)" --> MCPTools
+    MCPTools -- "Embeddings Binding" --> OpenAI
+    MCPTools -- "Store/Retrieve Snippets" --> Cosmos
+    MCPTools -- "Orchestrate" --> DTS
+    DTS -- "Agent Calls" --> Agents
+    Agents -- "Use Tool" --> VectorTool
+    VectorTool -- "Query" --> Cosmos
+    Agents -- "LLM Calls" --> OpenAI
 
-    %% ─── MCP protocol to Azure ────────────────────────────────────
-    Client <-- "MCP Protocol (SSE)" --> Snippy
-
-    %% ─── Bindings & data flow inside Azure ────────────────────────
-    Snippy -- Bindings --> AOAI
-    Snippy --> Cosmos
-    Snippy --> Foundry
-    Foundry --> FabricDA
-    Foundry --> VectorTool
-
-    %% ─── Styling ──────────────────────────────────────────────────
+    %% Styling
     classDef datasource stroke-width:2,stroke-dasharray:5 5
-    classDef dashed stroke-width:2,stroke-dasharray:5 5,fill:transparent
     class Cosmos datasource
-    class Snippy dashed
-    style mcphosts fill:transparent
-    style app fill:transparent
+    style clients fill:transparent
+    style azure fill:transparent
+    style functions fill:transparent
 ```
 
 ---
