@@ -95,7 +95,7 @@ After signing into GitHub, go back to VS Code and complete the Copilot setup:
   
 4. [ ] Click the **account icon** (bottom right) → **Sign in to use Copilot.**
 
-   !IMAGE[SnippyLab-GH-VSCode-SignIn](https://github.com/Azure-Samples/snippy/blob/docs/add-lab-instructions/images/SnippyLab-GH-VSCode-SignIn.png?raw=true)
+   !IMAGE[SnippyLab-GH-VSCode-SignIn](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-VSCode-SignIn.png)
 
 5. [ ] Select **Continue with GitHub**
 
@@ -640,12 +640,9 @@ Now that *local.settings.json* points to your actual Azure resources provisioned
 
     >[!alert] This may take a minute to start.
 
-2. [] Look for output indicating the Functions host has started successfully. You should see your functions listed, including the HTTP endpoints and the MCP tool trigger functions, as shown below:
+2. [] Look for output indicating the Functions host has started successfully. You should see your functions listed, including the HTTP endpoints, the MCP tool trigger functions, and even an orchestration (we'll run this soon), as shown below:
 
-    !IMAGE[0mxqfmje.jpg](instructions291323/0mxqfmje.jpg)
-
-    > [!note]
-    > The Functions runtime is using file-based secret storage via the "AzureWebJobsSecretStorageType": "files" setting, eliminating the need for Azurite or other storage emulators.
+	!IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-FuncStart.png)
 
 > [!knowledge] (Optional) 9.1 Test with REST Client (End-to-End Smoke test)
 >
@@ -667,7 +664,7 @@ Now that *local.settings.json* points to your actual Azure resources provisioned
 > 5. Test a few more operations to ensure everything works:
 >    - Save a more complex snippet using the **### Save a complex snippet** request
 >    - Retrieve it using the corresponding GET request
->    - Try the AI agent functions by running the **### Generate wiki documentation** or **### Generate code style guide** requests
+>    - Try the AI agent functions by running the **### Generate wiki** or **### Generate code style guide** requests
 > 
 > 6. For the agent-based functions (wiki and code style guide), note that these may take longer to execute (10-30 seconds) as they involve creating an AI agent that analyzes your saved snippets.
 > 
@@ -683,10 +680,10 @@ Now, connect GitHub Copilot Chat to your *locally running* Function App's MCP en
 1. [] **Verify MCP Server Configuration**:
    - In VS Code, open the **.vscode/mcp.json** file
    - You should see the **local-snippy** server already configured
-   - If you see a "Running" status with tools count (e.g., "✓ Running | Stop | Restart | 4 tools"), the server is already connected
+   - If you see a "Running" status with tools count (e.g., "✓ Running | Stop | Restart | 5 tools"), the server is already connected
    - If not connected, select the **Start** button in the file (appears at the top of the JSON configuration)
      
-     !IMAGE[11a-mcp-local-start.png](instructions291323/11a-mcp-local-start.png)
+     !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-MCP-Local-Start.png)
 
 2. [] **View MCP Server Logs** (optional but helpful):
    - Open the Command Palette by selecting **Ctrl+Shift+P** or **View > Command Palette** from the toolbar. 
@@ -707,7 +704,7 @@ Now, connect GitHub Copilot Chat to your *locally running* Function App's MCP en
 
    - At the bottom of the chat panel, select **Select Tools...** (or select **Ctrl+Shift+/**)
    
-       !IMAGE[12b-mcp-ghcp-tools.png](instructions291323/12b-mcp-ghcp-tools.png)
+       !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-MCP-Tools-Local.png)    
    
    - Make sure *MCP Server: local-snippy* and all its tools are checked
    - Select **Escape** or select **OK** to confirm your selection
@@ -742,16 +739,16 @@ Now, connect GitHub Copilot Chat to your *locally running* Function App's MCP en
 5. [] **Test the *save_snippet* Tool**:
    - [] Open any code file (e.g., **src/agents/durable_agents.py**).
    - [] Select some interesting code sections (or it'll take the entire file as a snippet, which is fine, as well).
-   - [] In Copilot Chat, enter `save this snippet as ai-agents-service-usage`, then select **Enter** or **Send**.
-   - [] If prompted by Copilot to use the **save_snippet** tool, select **Continue**.
+   - [] In Copilot Chat, enter `#local-snippy save this snippet as ai-agents-service-usage`, then select **Enter** or **Send**.
+   - [] If prompted by Copilot to use the **save_snippet** tool, select **Allow**.
    
-     !IMAGE[13-mcp-ghcp-save.png](instructions291323/13-mcp-ghcp-save.png)
-
+     !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-SaveSnippet-Local.png)
+     
 6. [] **Test the *get_snippet* Tool**:
    - [] In Copilot Chat, lets try explicity using the server and enter `#local-snippy get the snippet named ai-agents-service-usage`, then select **Enter** or **Send**.
-   - [] Copilot will suggest using the **get_snippet** tool - Select **Continue**.
+   - [] Copilot will suggest using the **get_snippet** tool - Select **Allow**.
    
-     !IMAGE[14-mcp-ghcp-get.png](instructions291323/14-mcp-ghcp-get.png)
+     !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GetSnippet-Local.png)
 
 7. [] **Experiment with Advanced AI Agent Tools**:
     - Try these prompts (no need to select code first):
@@ -766,8 +763,6 @@ Now, connect GitHub Copilot Chat to your *locally running* Function App's MCP en
         >[!alert] These agent-based tools may take a minute to run as they orchestrate (via managed AI Agents service) with configured tools and have self-reflection
 
     - [] Once they are done, open the files and Preview the generated Markdown (*Ctrl+K V*)
-
-     !IMAGE[15-deep-wiki.png](instructions291323/15-deep-wiki.png)
 
 8. [] **Check Function Logs**:
 
@@ -790,9 +785,9 @@ Now you'll test the `generate_comprehensive_documentation` tool, which orchestra
 2. [] **Trigger the Multi-Agent Orchestration**:
    - In GitHub Copilot Chat (with the **local-snippy** MCP server active), enter the following prompt:
    
-     `Generate comprehensive documentation with emphasis on the MCP tools, vector search capabilities and code style. Save in a new file called comprehensive-documentation.md`
+     `#local-snippy Generate comprehensive documentation with emphasis on the MCP tools, vector search capabilities and code style. Save in a new file called comprehensive-documentation.md`
    
-   - Select **Continue** when Copilot asks to use the **generate_comprehensive_documentation** tool
+   - Select **Allow** when Copilot asks to use the **generate_comprehensive_documentation** tool
 
 3. [] **Monitor the Orchestration**:
    - Switch to your browser at `http://localhost:8082/`
@@ -889,7 +884,9 @@ Finally, configure VS Code and Copilot Chat to use the tools running on your *de
 
     >[!note]The output will be a long string - **copy this value**. This is your **<system-key>** required for calling the MCP endpoint.
 
-2. [] **Add Cloud Endpoint to *.vscode/mcp.json*:** After retrieving your Function App name and MCP system key, you can now configure the cloud endpoint in *.vscode/mcp.json*.
+2. [] **Add Cloud Endpoint to *.vscode/mcp.json*:** 
+   
+   After retrieving your Function App name and MCP system key, you can now configure the cloud endpoint in *.vscode/mcp.json*.
 
    Stop the **local-snippy** server if it is still running. 
 
@@ -913,7 +910,7 @@ Finally, configure VS Code and Copilot Chat to use the tools running on your *de
 
      This setup allows the cloud-hosted MCP to receive and stream events securily.
 
-     !IMAGE[16-remote-snippy.png](instructions291323/16-remote-snippy.png)
+     !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-MCP-Remote.png)     
 
 3. []  **Switch Copilot to Cloud Server:**
 
@@ -925,14 +922,9 @@ Finally, configure VS Code and Copilot Chat to use the tools running on your *de
     Repeat the tests from earlier, but this time with the *remote-snippy* server:
 
       * Select some code.
-      * Ask Copilot: `save the selected snippet as my-cloud-mcp-test`
-        
-        >[!alert] If you see errors on **local-snippy**, open *.vscode/mcp.json*, delete the block of text for **local-snippy**, then try again. You may need to start a new chat if it continues to attempt with **local-snippy**.
-        >
-        >!IMAGE[74sc3vu8.jpg](instructions291323/74sc3vu8.jpg)
-
+      * Ask Copilot: `#remote-snippy save the selected snippet as my-cloud-mcp-test`
       * Confirm the tool usage.
-      * Ask Copilot: `get the snippet named my-cloud-mcp-test`
+      * Ask Copilot: `#remote-snippy get the snippet named my-cloud-mcp-test`
       * Try other tools like **deep_wiki** as we did earlier.
 
     Verify that the tools work correctly by interacting with your deployed Azure Function App.
