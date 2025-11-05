@@ -228,7 +228,7 @@ Azure Functions provides a serverless platform for building AI-integrated micros
 
 **Target File:** Open ***src/function_app.py*** in VS Code
 
-1. [] Navigate to the **TOOL PROPERTY DEFINITIONS** section (around lines 53-95)
+1. [] Navigate to the **TOOL PROPERTY DEFINITIONS** section (around line 60)
 
 2. [] **Examine how tool properties are defined:**
 
@@ -269,7 +269,7 @@ Azure Functions provides a serverless platform for building AI-integrated micros
     > - `tool_name="save_snippet"` - how AI assistants will refer to this tool
     > - `description` - explains to the AI what this tool does
     > - `tool_properties` - the schema (from section 5.1) serialized as JSON
-    > - When deployed, Azure Functions automatically exposes an MCP SSE endpoint that AI assistants can discover
+    > - When deployed, Azure Functions automatically exposes an MCP endpoint that AI assistants can discover
 
 ---
 
