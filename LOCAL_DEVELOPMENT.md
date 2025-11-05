@@ -22,8 +22,23 @@ func start
 
 **Dashboard URLs:**
 
-- DTS Dashboard: <http://localhost:8082/>
-- Azurite Blob: <http://localhost:10000/>
+- **Local DTS Dashboard**: <http://localhost:8082/> - Monitor orchestrations running locally
+- **Azurite Blob**: <http://localhost:10000/>
+
+**Monitoring Orchestrations:**
+
+- **Local**: Open <http://localhost:8082/> to view orchestrations running against the local DTS emulator
+- **Cloud**: Generate the Azure DTS dashboard URL with the provided scripts:
+
+  ```bash
+  ./scripts/get-dts-dashboard-url.sh
+  ```
+  or
+  ```powershell
+  .\scripts\get-dts-dashboard-url.ps1
+  ```
+
+  Then open the generated URL in your browser to view orchestrations running in Azure.
 
 To stop the emulators:
 

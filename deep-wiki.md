@@ -1,12 +1,17 @@
 # Project Overview
 
-This project is centered around the MCP (Model Context Protocol) tools designed for use with Azure Functions and AI-powered operations. The tools enable seamless integration with Azure OpenAI, Cosmos DB, and AI Agents to manage and analyze code snippets. Key functionalities include document management, vector search, error handling, logging, and provisioned cloud infrastructure using Bicep templates.
+This project is centered around the MCP (Model Context Protocol) tools designed for use with Azure Functions and AI-powered operations. The tools enable seamless integration with Azure OpenAI, Cosmos DB, and AI Agents to manage and analyze code snippets. Key functionalities include document management, vector search, error handling, logging, provisioned cloud infrastructure using Bicep templates, and **multi-agent orchestration** with monitoring via the Durable Task Scheduler (DTS) dashboard.
+
+Recent updates include:
+* Durable Task Scheduler integration for cloud orchestration
+* DTS dashboard scripts for monitoring orchestrations in Azure (`get-dts-dashboard-url.sh` and `.ps1`)
+* Multi-agent workflows coordinating DeepWiki and CodeStyle agents
 
 ## Major Concepts
 
 ### MCP Tools
 
-MCP tools automate operations related to code snippets using triggers that respond to Azure Function events. Tools such as `save_snippet`, `get_snippet`, `deep_wiki`, and `code_style` interact with various Azure services to provide a robust solution for code documentation and analysis.
+MCP tools automate operations related to code snippets using triggers that respond to Azure Function events. Tools such as `save_snippet`, `get_snippet`, `deep_wiki`, `code_style`, and `generate_comprehensive_documentation` interact with various Azure services to provide a robust solution for code documentation, analysis, and multi-agent orchestration.
 
 ### Azure Functions
 
@@ -30,23 +35,34 @@ Azure Bicep is used to define infrastructure as code, setting up Azure resources
 
 ## Diagram Visualizations
 
+### Orchestration Monitoring
+
+Monitor orchestrations using the DTS dashboard:
+* **Local**: Open <http://localhost:8082/> when using the DTS emulator
+* **Azure**: Use the provided scripts (`get-dts-dashboard-url.sh` and `.ps1`) to generate the Azure dashboard URL
+
 ### System Architecture
 
 ```mermaid
 flowchart TB
     subgraph Azure Services
-        AzureFunctions --Triggers--> MCPTools
-        MCPTools --Stores--> CosmosDB
-        MCPTools --Generates--> AzureOpenAI
+        AzureFunctions["Azure Functions<br/>(MCP Server)"]
+        DTS["Durable Task Scheduler"]
+        Agents["Durable Agents<br/>(DeepWiki · CodeStyle)"]
+        MCPTools["MCP Tools<br/>(save_snippet, get_snippet, etc.)"]
+        CosmosDB["Cosmos DB<br/>(Vector + Operational)"]
+        AzureOpenAI["Azure OpenAI<br/>(Embeddings + LLM)"]
     end
 
-    subgraph MCPTool Interaction
-        SaveSnippet --Embeds--> AzureOpenAI
-        GetSnippet --Reads--> CosmosDB
-    end
-
-    AzureFunctions -.-> Logging
-    Logging -.-> ErrorHandling
+    AzureFunctions --> MCPTools
+    MCPTools --"Orchestrate"--> DTS
+    DTS --"Agent Calls"--> Agents
+    MCPTools --"Store/Retrieve"--> CosmosDB
+    MCPTools --"Embeddings"--> AzureOpenAI
+    Agents --"Vector Search"--> CosmosDB
+    Agents --"LLM Calls"--> AzureOpenAI
+    AzureFunctions -.-> Logging["Logging & Monitoring"]
+    Logging -.-> ErrorHandling["Error Handling"]
 ```
 
 ### Data Flow
@@ -54,16 +70,38 @@ flowchart TB
 ```mermaid
 sequenceDiagram
     participant User
-    participant AzureFunctionApp
-    participant AzureOpenAI
-    participant CosmosDB
+    participant Copilot as GitHub Copilot
+    participant FunctionApp as Azure Functions<br/>(MCP Server)
+    participant DTS as Durable Task Scheduler
+    participant Agent as Durable Agent
+    participant OpenAI as Azure OpenAI
+    participant Cosmos as Cosmos DB
 
-    User->>AzureFunctionApp: Send Snippet
-    AzureFunctionApp->>AzureOpenAI: Generate Embeddings
-    AzureOpenAI-->>AzureFunctionApp: Return Embeddings
-    AzureFunctionApp->>CosmosDB: Store Snippet & Embeddings
-    CosmosDB-->>AzureFunctionApp: Success/Failure Response
-    AzureFunctionApp-->>User: Notify Status
+    User->>Copilot: "Save this snippet"
+    Copilot->>FunctionApp: MCP Tool: save_snippet
+    FunctionApp->>OpenAI: Generate Embeddings
+    OpenAI-->>FunctionApp: Return Embeddings
+    FunctionApp->>Cosmos: Store Snippet & Embeddings
+    Cosmos-->>FunctionApp: Success Response
+    FunctionApp-->>Copilot: Confirmation
+    Copilot-->>User: "Snippet saved"
+
+    User->>Copilot: "Generate documentation"
+    Copilot->>FunctionApp: MCP Tool: generate_comprehensive_documentation
+    FunctionApp->>DTS: Start Orchestration
+    DTS->>Agent: Call DeepWikiAgent
+    Agent->>Cosmos: Vector Search
+    Cosmos-->>Agent: Relevant Snippets
+    Agent->>OpenAI: Generate Documentation
+    OpenAI-->>Agent: Documentation Content
+    Agent-->>DTS: Return Result
+    DTS->>Agent: Call CodeStyleAgent
+    Agent->>OpenAI: Generate Style Guide
+    OpenAI-->>Agent: Style Guide Content
+    Agent-->>DTS: Return Result
+    DTS-->>FunctionApp: Orchestration Complete
+    FunctionApp-->>Copilot: Combined Results
+    Copilot-->>User: Save to File
 ```
 
 ## Snippet Catalog

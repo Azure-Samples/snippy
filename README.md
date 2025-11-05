@@ -27,16 +27,15 @@ urlFragment: snippy
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=Azure-Samples/snippy&machine=basicLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json)
 [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/Azure-Samples/snippy)
 
-Snippy is an **Azure Functions**–based reference application that turns any function into an **MCP (Model Context Protocol) tool** consumable by GitHub Copilot Chat and other MCP‑aware clients. The sample implements a production‑style *code‑snippet service* with AI‑powered analysis:
+Snippy is an **Azure Functions**-based reference application that demonstrates how to build **MCP (Model Context Protocol) tools** that integrate with AI assistants like GitHub Copilot. The sample implements an intelligent *code-snippet service* featuring:
 
-* **Save snippets** – persists code, metadata and OpenAI embeddings in **Cosmos DB DiskANN**
-* **Semantic retrieve** – vector search over embeddings
-* **AI Agents** – generate a **deep wiki** or language‑specific **code style guide** from stored snippets
-* **Durable fan‑out/fan‑in with Blueprints** – [in experimental branch](https://github.com/Azure-Samples/snippy/tree/gk/durable-functions) for large‑scale processing
-* **Microsoft Fabric integration** – [in gk/fabric branch](https://github.com/Azure-Samples/snippy/tree/gk/fabric) demonstrating how to build Agents with Fabric Data Agents
+* **MCP Tool Integration** – expose Azure Functions as discoverable tools for AI assistants
+* **Durable Agents** – create stateful AI agents using **Microsoft Agent Framework** with automatic state management
+* **Multi-Agent Orchestration** – coordinate DeepWiki and CodeStyle agents using **Durable Task Scheduler**
+* **Vector Search** – semantic retrieval using **Cosmos DB DiskANN** with Azure OpenAI embeddings
+* **Monitoring & Observability** – track orchestrations in real-time with DTS dashboard (local & cloud)
 
-
-The project ships with reproducible **azd** infrastructure, so `azd up` will stand up the entire stack – Functions, Cosmos DB, Azure OpenAI and Azure AI Agents – in a single command.
+The project ships with reproducible **azd** infrastructure, so `azd up` will stand up the entire stack – Functions, Cosmos DB, Azure OpenAI, and Durable Task Scheduler – in a single command.
 
 > **Important Security Notice**
 > This repository is intended for learning and demonstration purposes. **Do not** deploy it to production without a thorough security review. At a minimum you should:
@@ -49,22 +48,33 @@ The project ships with reproducible **azd** infrastructure, so `azd up` will st
 
 ---
 
+## Recent Updates
+
+* **Durable Task Scheduler (DTS) integration** for cloud orchestration and monitoring
+* **DTS dashboard scripts**: Quickly generate monitoring URLs for Azure deployments (`scripts/get-dts-dashboard-url.sh` and `.ps1`)
+* **Multi-agent orchestration**: Coordinate DeepWiki and CodeStyle agents with Durable Functions
+* **Enhanced monitoring**: View orchestration state in local DTS emulator or Azure DTS dashboard
+
+
 ## Features
 
-* **Remote MCP trigger** – expose Functions as real‑time SSE tools
-* **AI‑assisted documentation** – "deep‑wiki" and "code‑style" agents create rich Markdown (Mermaid, diagrams, etc.)
-* **Vector search on Cosmos DB DiskANN** – low‑latency semantic retrieval
-* **One‑click deploy** – `azd up` provisions and deploys code & infra
-* **Codespaces & Dev Containers** – fully configured dev environment in your browser or local VS Code
+* **MCP Tool Integration** – expose Azure Functions as discoverable MCP tools for AI assistants via SSE protocol
+* **Durable Agents with Microsoft Agent Framework** – build stateful AI agents using `ChatAgent` with automatic conversation history management
+* **Multi-Agent Orchestration** – coordinate specialized agents (DeepWiki, CodeStyle) using Durable Task Scheduler with fan-out/fan-in patterns
+* **Vector Search on Cosmos DB DiskANN** – semantic code retrieval using Azure OpenAI embeddings and low-latency vector indexing
+* **Monitoring & Observability** – track orchestrations in real-time using DTS dashboard (localhost:8082 local, Azure portal for cloud)
+* **One-click Deploy** – `azd up` provisions and deploys complete infrastructure including Functions, Cosmos DB, Azure OpenAI, and DTS
+* **Codespaces & Dev Containers** – fully configured development environment in your browser or local VS Code
 
 ### Tool Matrix
 
-| Tool Name      | Purpose                                                             |
-| -------------- | ------------------------------------------------------------------- |
-| `save_snippet` | Save code snippets with vector embeddings for semantic search       |
-| `get_snippet`  | Retrieve previously saved code snippets by their unique name        |
-| `code_style`   | Generate language-specific code style guides from saved snippets    |
-| `deep_wiki`    | Create comprehensive wiki documentation by analyzing code snippets  |
+| Tool Name                        | Purpose                                                             |
+| -------------------------------- | ------------------------------------------------------------------- |
+| `save_snippet`                   | Save code snippets with vector embeddings for semantic search       |
+| `get_snippet`                    | Retrieve previously saved code snippets by their unique name        |
+| `code_style`                     | Generate language-specific code style guides from saved snippets    |
+| `deep_wiki`                      | Create comprehensive wiki documentation by analyzing code snippets  |
+| `generate_comprehensive_documentation` | Orchestrate multi-agent workflow to produce deep wiki and style guide |
 
 ---
 
@@ -198,33 +208,36 @@ docker compose up -d
 ./scripts/generate-settings.sh
 
 # Run the Functions app
-cd src
-func start
+```mermaid
+flowchart LR
+  subgraph mcphosts["MCP Hosts & Clients (Your Computer)"]
+    Host["Host (VS Code / IDE)"]
+    Client["Client (GitHub Copilot)"]
+  end
+  Host --"MCP Protocol"--> Client
+  Client --"Tool Discovery"--> FunctionApp["Function App (MCP Server)"]
+  FunctionApp --"Orchestrate"--> DTS["Durable Task Scheduler"]
+  DTS --"Agent Calls"--> Agents["Durable Agents<br/>DeepWiki · CodeStyle"]
+  FunctionApp --"Vector Search"--> CosmosDB
+  Agents --"Vector Search"--> CosmosDB
+  FunctionApp --"Embeddings"--> OpenAI["Azure OpenAI"]
+  Agents --"LLM Calls"--> OpenAI
+  DTS --"Dashboard"--> User["Developer/Monitor"]
 ```
 
-**Available Dashboards:**
+---
 
-* **DTS Dashboard**: <http://localhost:8082/> - Monitor orchestration instances, view execution history
-* **Azurite**: Runs on ports 10000-10002 for Blob, Queue, and Table services
+## Monitoring & Orchestration
 
-#### Without Docker
+* **Local development**: Monitor orchestrations at <http://localhost:8082/> when using the DTS emulator
+* **Azure deployment**: Use the DTS dashboard scripts to generate monitoring URLs:
+  * Bash: `./scripts/get-dts-dashboard-url.sh`
+  * PowerShell: `.\scripts\get-dts-dashboard-url.ps1`
+* View multi-agent orchestration execution, including DeepWiki and CodeStyle agent calls
+* Track tool invocations, state transitions, and execution timelines
 
-If Docker is not available, you can use native Azurite with Azure Storage backend:
+---
 
-```bash
-# 1. Install Azurite globally
-npm install -g azurite
-
-# 2. Switch to Azure Storage backend
-./scripts/switch-storage-backend.sh azureStorage
-
-# 3. Start Azurite in a separate terminal
-azurite
-
-# 4. Generate settings and run
-./scripts/generate-settings.sh
-cd src
-func start
 ```
 
 To switch back to DTS when Docker becomes available:
@@ -243,15 +256,6 @@ For detailed setup instructions and troubleshooting, see [LOCAL_DEVELOPMENT.md](
 
 Azure OpenAI model support varies by region. Verify availability [here](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#standard-deployment-model-availability) and choose the same region for all Azure resources. **eastus** and **swedencentral** are good default choices.
 
-### Costs
-
-Estimate monthly cost using the [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/). Major components:
-
-* Azure Functions – Consumption / Flex tiers
-* Cosmos DB – Serverless or provisioned throughput
-* Azure OpenAI – pay‑as‑you‑go per 1K tokens
-* Azure AI Agents – per‑execution billing (preview)
-
 ### Security
 
 Snippy uses User-Assigned Managed Identity for secure service-to-service authentication. The infrastructure is configured with:
@@ -266,15 +270,6 @@ For production deployments, we recommend:
 
 * Restrict inbound traffic with Private Endpoints + VNet integration
 * Enable network security features like service endpoints and firewall rules
-
----
-
-## Resources
-
-* Blog – *Build AI agent tools using Remote MCP with Azure Functions* ([https://aka.ms/snippy-blog](https://aka.ms/snippy-blog))
-* Model Context Protocol spec – [https://aka.ms/mcp](https://aka.ms/mcp)
-* Azure Functions Remote MCP docs – [https://aka.ms/azure-functions-mcp](https://aka.ms/azure-functions-mcp)
-* Develop Python apps for Azure AI – [https://learn.microsoft.com/azure/developer/python/azure-ai-for-python-developers](https://learn.microsoft.com/azure/developer/python/azure-ai-for-python-developers)
 
 ---
 
