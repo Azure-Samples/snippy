@@ -67,7 +67,7 @@ From your lab environment's Desktop (or Taskbar), open **Edge - Snippy & Portal*
 ## **2** -  Clone the repository and launch VS Code
 
 1. [ ] From the Windows Taskbar, open the Terminal
-    !IMAGE[SnippyLab-Terminal.png](https://raw.githubusercontent.com/Azure-Samples/snippy/refs/heads/docs/add-lab-instructions/images/SnippyLab-Terminal.png)
+    !IMAGE[SnippyLab-Terminal.png](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-Terminal.png)
 2. [ ] Clone the GitHub repo for Snippy `git clone https://github.com/Azure-Samples/snippy.git`
 3. [ ] After the clone, go to the snippy folder `cd snippy`
 4. [ ] Launch VS Code from the terminal with `code .`
@@ -82,7 +82,7 @@ To use GitHub Copilot, sign in with the GitHub account provided in your lab envi
 1. [ ] In Edge, open a new tab and go to: +++https://github.com/enterprises/skillable-events/sso+++
 2. [ ] Click on **Continue**
 
-   !IMAGE[SnippyLab-GH-Continue](https://raw.githubusercontent.com/Azure-Samples/snippy/refs/heads/docs/add-lab-instructions/images/SnippyLab-GH-Continue.png)
+   !IMAGE[SnippyLab-GH-Continue](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-Continue.png)
 
 3. [ ] Log in with the credentials listed in the **Resources** tab
 
@@ -99,23 +99,23 @@ After signing into GitHub, go back to VS Code and complete the Copilot setup:
 
 5. [ ] Select **Continue with GitHub**
 
-   !IMAGE[SnippyLab-GH-Continue-GH](https://raw.githubusercontent.com/Azure-Samples/snippy/refs/heads/docs/add-lab-instructions/images/SnippyLab-GH-Continue-GH.png)
+   !IMAGE[SnippyLab-GH-Continue-GH](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-Continue-GH.png)
 
 6. [ ] Click **Continue** to Authorize VS Code to access your GitHub account.
 
-   !IMAGE[SnippyLab-GH-Authorize](https://raw.githubusercontent.com/Azure-Samples/snippy/refs/heads/docs/add-lab-instructions/images/SnippyLab-GH-Authorize.png)
+   !IMAGE[SnippyLab-GH-Authorize](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-Authorize.png)
 
 7. [ ] Click **Authorize Visual-Studio-Code**.
 
-   !IMAGE[SnippyLab-GH-Authorize-VS](https://raw.githubusercontent.com/Azure-Samples/snippy/refs/heads/docs/add-lab-instructions/images/SnippyLab-GH-Authorize-VS.png)
+   !IMAGE[SnippyLab-GH-Authorize-VS](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-Authorize-VS.png)
 
 8. [ ] When prompted, choose to always allow **vscode.dev** to open links.
 
-   !IMAGE[SnippyLab-GH-Always](https://raw.githubusercontent.com/Azure-Samples/snippy/refs/heads/docs/add-lab-instructions/images/SnippyLab-GH-Always.png)
+   !IMAGE[SnippyLab-GH-Always](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-Always.png)
 
 9. [ ] Back in VS Code, open the **GitHub Copilot Chat** window and switch the model to **Claude Sonnet 4.5**.
 
-   !IMAGE[SnippyLab-GH-Model](https://raw.githubusercontent.com/Azure-Samples/snippy/refs/heads/docs/add-lab-instructions/images/SnippyLab-GH-Model.png)
+   !IMAGE[SnippyLab-GH-Model](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-Model.png)
  
 
 > [+hint] (Optional) MCP Server Access Restriction Workaround
@@ -137,7 +137,7 @@ Now, you'll use the Azure Developer CLI (azd) to *start* provisioning all the ne
 1. [] **Login to azd:**
     Open your terminal inside VS Code (*View → Terminal*) and log in to Azure (ensure you are in the *snippy* root directory):
     
-	!IMAGE[SnippyLab-VS-Terminal](https://raw.githubusercontent.com/Azure-Samples/snippy/refs/heads/docs/add-lab-instructions/images/SnippyLab-VS-Terminal.png)
+	!IMAGE[SnippyLab-VS-Terminal](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-VS-Terminal.png)
 
     `azd auth login`
 
@@ -569,7 +569,7 @@ Let's first install the Python packages required by the Function App:
 
 4. [] Your *src/local.settings.json* file should now look similar to this (with your specific resource details, and additional keys):
 
-    !IMAGE[pwpg7pp8.jpg](instructions291323/pwpg7pp8.jpg)
+    !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-LocalSettings.png)
 
 5. [] (Optional) If for any reason the *local.settings.json* file wasn't properly generated or is missing values, you can manually run the generation script:
 
@@ -598,6 +598,8 @@ The agent-framework-azurefunctions library requires the Durable Task emulator to
 
     This starts the Durable Task emulator container which the agents will use for state persistence.
 
+    If prompted to allow network access, select **Allow** to continue.
+
 3. [] Verify the container is running:
 
     `docker compose ps`
@@ -621,6 +623,8 @@ Now that *local.settings.json* points to your actual Azure resources provisioned
     `az login --use-device-code`
 
     >[!note] This command will output a URL and a device code. Copy the code, **Ctrl+Click** the URL to open it, then paste the code when prompted to complete authentication.
+
+2. [] Go back to the VS Code terminal and enter `1` to pick the subscription.
 
 2. [] In the same terminal where you activated the virtual environment in Step 6, ensure you're in the **snippy/src** directory:
 
