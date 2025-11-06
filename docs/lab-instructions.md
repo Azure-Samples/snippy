@@ -32,7 +32,7 @@ You'll implement both patterns:
  
 This dual approach demonstrates how serverless functions can seamlessly integrate with modern AI workflows through standard protocols.
 
-!IMAGE[snippy-architecture-diagram.png](instructions291323/snippy-architecture-diagram.png)
+ !IMAGE[SnippyLab-Terminal.png](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/Snippy-Architecture.png)
 
 ===
 
