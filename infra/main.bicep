@@ -7,7 +7,7 @@ param environmentName string
 
 @minLength(1)
 @description('Primary location for all resources')
-@allowed([ 'eastus2', 'westus', 'westus2', 'westus3'])
+@allowed([ 'westus', 'westus2', 'westus3', 'eastus2'])
 @metadata({
   azd: {
     type: 'location'

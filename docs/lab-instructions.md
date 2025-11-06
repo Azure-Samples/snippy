@@ -162,7 +162,7 @@ Now, you'll use the Azure Developer CLI (azd) to *start* provisioning all the ne
 
   An azd environment stores configuration details like subscription ID and location. Create a new environment for this lab (this will be unique to each lab environment):
 
-    `azd env new snippymcplab-@lab.labinstance.id --subscription @lab.cloudsubscription.id --location @lab.cloudresourcegroup(ResourceGroup1).Location`
+    `azd env new snippymcplab-@lab.labinstance.id --subscription @lab.cloudsubscription.id`
 
 4. [] **Set the name suffix for Azure resources:**
 
@@ -181,6 +181,8 @@ Now, you'll use the Azure Developer CLI (azd) to *start* provisioning all the ne
     Run  `azd provision`
     
     to provision all the Azure resources needed to run snippy. 
+
+    If prompted, select a location from the terminal to deploy the Azure resources.
 
     > [!knowledge] This command provisions Azure resources such as:
     >   * Azure Function App (using the scalable Flex Consumption plan)
