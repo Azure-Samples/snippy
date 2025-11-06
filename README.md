@@ -80,45 +80,7 @@ The project ships with reproducible **azd** infrastructure, so `azd up` will sta
 
 ### Architecture Diagram
 
-```mermaid
-flowchart LR
-    %% MCP Clients
-    subgraph clients["MCP Clients"]
-        Host["Host<br/>(VS Code / IDE)"]
-        Copilot["GitHub Copilot"]
-    end
-
-    %% Azure Functions & Services
-    subgraph azure["Azure"]
-        subgraph functions["Azure Functions (MCP Server)"]
-            MCPTools["MCP Tools<br/>(save_snippet, get_snippet, etc.)"]
-            DTS["Durable Task Scheduler<br/>(Orchestration)"]
-        end
-        
-        Agents["Durable Agents<br/>(DeepWiki · CodeStyle)"]
-        VectorTool["Vector Search Tool"]
-        Cosmos["Cosmos DB<br/>(Vector + Operational)"]
-        OpenAI["Azure OpenAI<br/>(Embeddings + LLM)"]
-    end
-
-    %% Connections
-    Host <--> Copilot
-    Copilot <-- "MCP Protocol (SSE)" --> MCPTools
-    MCPTools -- "Embeddings Binding" --> OpenAI
-    MCPTools -- "Store/Retrieve Snippets" --> Cosmos
-    MCPTools -- "Orchestrate" --> DTS
-    DTS -- "Agent Calls" --> Agents
-    Agents -- "Use Tool" --> VectorTool
-    VectorTool -- "Query" --> Cosmos
-    Agents -- "LLM Calls" --> OpenAI
-
-    %% Styling
-    classDef datasource stroke-width:2,stroke-dasharray:5 5
-    class Cosmos datasource
-    style clients fill:transparent
-    style azure fill:transparent
-    style functions fill:transparent
-```
+![Snippy Architecture](images/Snippy-Architecture.png)
 
 ---
 
@@ -178,6 +140,7 @@ azd up
 ```
 
 The CLI will automatically:
+
 * Create an Azure AD app registration for OAuth authentication
 * Provision all Azure resources (Functions, Cosmos DB, OpenAI, etc.)
 * Deploy the application code
