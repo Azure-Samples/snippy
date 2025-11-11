@@ -687,7 +687,7 @@ Now, connect GitHub Copilot Chat to your *locally running* Function App's MCP en
 > These workarounds will let you complete the lab exercises even if organizational policies restrict direct MCP server access.
 
 5. [] **Test the *save_snippet* Tool**:
-   - [] Open any code file (e.g., **src/agents/durable_agents.py**).
+   - [] Open any code file (e.g., **src/durable_agents.py**).
    - [] Select some interesting code sections (or it'll take the entire file as a snippet, which is fine, as well).
    - [] In Copilot Chat, enter `#local-snippy save this snippet as ai-agents-service-usage`, then select **Enter** or **Send**.
    - [] If prompted by Copilot to use the **save_snippet** tool, select **Allow**.
