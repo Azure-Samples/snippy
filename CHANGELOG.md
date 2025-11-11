@@ -6,6 +6,13 @@
 *Features*
 * ...
 
+## 2025-11-10
+
+### Code Cleanup
+* Removed duplicate `agents/durable_agents.py` file - consolidated to single `durable_agents.py` in src root
+* Updated documentation to reflect actual use of `AzureOpenAIChatClient` (not AzureOpenAIResponsesClient)
+* Simplified project structure by removing unused agents subdirectory
+
 ## 2025-11-05
 
 ### Features

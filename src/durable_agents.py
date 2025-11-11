@@ -2,31 +2,24 @@
 Combined module for all durable agents using Microsoft Agent Framework.
 
 This module demonstrates the integration of:
-- Microsoft Agent Framework - Modern AI agent abstraction with ChatAgent
-- Azure OpenAI Responses - Latest OpenAI Responses API for agent execution
+- Microsoft Agent Framework - Modern AI agent abstraction
+- Azure OpenAI Chat - Azure OpenAI Chat API for agent execution
 - agent-framework-azurefunctions - Durable Functions integration for agents
 
 Key features showcased:
-1. ChatAgent - Microsoft's unified agent abstraction from agent-framework
-2. AzureOpenAIResponsesClient - Azure OpenAI Responses API client
-3. AgentFunctionApp - High-level abstraction for durable agents
-4. Automatic state management via Durable Entities
-5. Tool calling with vector_search for code snippet retrieval
-6. Session-based conversation tracking
-7. RESTful API generation for both DeepWiki and CodeStyle agents
+1. AzureOpenAIChatClient - Azure OpenAI Chat API client with automatic authentication
+2. AgentFunctionApp - High-level abstraction for durable agents AND MCP tools
+3. Automatic state management via Durable Entities
+4. Tool calling with vector_search for code snippet retrieval
+5. Session-based conversation tracking
+6. RESTful API generation for agents
+7. MCP tool integration for AI assistants
 
 Architecture:
-- Uses Microsoft Agent Framework's ChatAgent as the core agent abstraction
-- AzureOpenAIResponsesClient provides Azure OpenAI Responses API integration
+- Uses AzureOpenAIChatClient with DefaultAzureCredential for authentication
 - Agents run inside Durable Entities with automatic serialization
 - Built-in retry logic and error handling
-- Optional orchestrations for multi-agent workflows (see documentation_orchestration)
-
-Endpoints automatically created by AgentFunctionApp:
-- POST /api/agents/DeepWikiAgent/run - Generate wiki documentation
-- POST /api/agents/CodeStyleAgent/run - Generate code style guide
-- GET /api/agents/{AgentName}/{sessionId} - Retrieve conversation history
-- GET /api/health - Health check endpoint
+- Same AgentFunctionApp supports both agent endpoints AND MCP tool triggers
 
 For more info:
 - Microsoft Agent Framework: https://github.com/microsoft/agent-framework
@@ -38,11 +31,11 @@ import json
 import azure.functions as func
 import azure.durable_functions as df
 from azure.durable_functions import DurableOrchestrationContext
-from durableagent import AgentFunctionApp
+from agent_framework_azurefunctions import AgentFunctionApp, get_agent
 from agent_framework import ChatAgent  # Microsoft Agent Framework
-from agent_framework.azure import AzureOpenAIResponsesClient  # Azure OpenAI Responses client
-from azure.identity import DefaultAzureCredential
-from agents.tools import vector_search
+from agent_framework.azure import AzureOpenAIChatClient  # Azure OpenAI Chat client
+from azure.identity import DefaultAzureCredential  # For RBAC authentication
+from tools import vector_search
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
@@ -155,49 +148,85 @@ Return only the final Markdown document, no additional commentary.
 # AGENT CREATION
 # =============================================================================
 
-logger.info("Creating agents with Microsoft Agent Framework (AzureOpenAIResponsesClient)")
-
-# Create Azure OpenAI Responses client
-# This client uses the Azure OpenAI Responses API
-# Support both API key and DefaultAzureCredential authentication
-azure_openai_key = os.environ.get("AZURE_OPENAI_KEY")
-if azure_openai_key:
-    # Use API key authentication for local development
-    logger.info("Using API key authentication for Azure OpenAI")
-    responses_client = AzureOpenAIResponsesClient(
-        endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
-        deployment_name=os.environ.get("AGENTS_MODEL_DEPLOYMENT_NAME", "gpt-4o-mini"),
-        api_key=azure_openai_key,
+def _create_agents():
+    """
+    Create agents with lazy initialization.
+    This is called during Azure Functions initialization when environment variables are available.
+    Uses Azure CLI credentials (DefaultAzureCredential) when AZURE_OPENAI_API_KEY is not set.
+    """
+    logger.info("Creating agents with Microsoft Agent Framework (AzureOpenAIChatClient)")
+    
+    # Create Azure OpenAI Chat client
+    # This client uses the Azure OpenAI Chat Completions API which supports metadata
+    # Support both API key and DefaultAzureCredential authentication
+    azure_openai_key = os.environ.get("AZURE_OPENAI_KEY")
+    if azure_openai_key:
+        # Use API key authentication for local development
+        logger.info("Using API key authentication for Azure OpenAI")
+        chat_client = AzureOpenAIChatClient(
+            endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
+            deployment_name=os.environ.get("AGENTS_MODEL_DEPLOYMENT_NAME", "gpt-4o-mini"),
+            api_key=azure_openai_key,
+        )
+    else:
+        # Use DefaultAzureCredential for production (requires 'az login' for local dev)
+        logger.info("Using DefaultAzureCredential for Azure OpenAI")
+        chat_client = AzureOpenAIChatClient(
+            endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
+            deployment_name=os.environ.get("AGENTS_MODEL_DEPLOYMENT_NAME", "gpt-4o-mini"),
+            credential=DefaultAzureCredential(),
+        )
+    
+    # Create DeepWiki agent using ChatAgent
+    # ChatAgent is the core agent abstraction from Microsoft Agent Framework
+    deep_wiki_agent = ChatAgent(
+        chat_client=chat_client,
+        name="DeepWikiAgent",  # This name is used for routing
+        instructions=_DEEP_WIKI_SYSTEM_PROMPT,
+        tools=[vector_search.vector_search],  # Pass the vector search tool
     )
-else:
-    # Use DefaultAzureCredential for production (requires 'az login' for local dev)
-    logger.info("Using DefaultAzureCredential for Azure OpenAI")
-    responses_client = AzureOpenAIResponsesClient(
-        endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
-        deployment_name=os.environ.get("AGENTS_MODEL_DEPLOYMENT_NAME", "gpt-4o-mini"),
-        credential=DefaultAzureCredential(),
+    
+    logger.info(f"Created agent: {deep_wiki_agent.name}")
+    
+    # Create CodeStyle agent using ChatAgent
+    code_style_agent = ChatAgent(
+        chat_client=chat_client,
+        name="CodeStyleAgent",  # This name is used for routing
+        instructions=_CODE_STYLE_SYSTEM_PROMPT,
+        tools=[vector_search.vector_search],  # Pass the vector search tool
     )
+    
+    logger.info(f"Created agent: {code_style_agent.name}")
+    
+    return [deep_wiki_agent, code_style_agent]
 
-# Create DeepWiki agent using ChatAgent
-# ChatAgent is the core agent abstraction from Microsoft Agent Framework
-deep_wiki_agent = ChatAgent(
-    chat_client=responses_client,
-    name="DeepWikiAgent",  # This name is used for routing
-    instructions=_DEEP_WIKI_SYSTEM_PROMPT,
-    tools=[vector_search.vector_search],  # Pass the vector search tool
-)
 
-logger.info(f"Created agent: {deep_wiki_agent.name}")
+# Create agents at module level ONLY if we have the required environment variables
+# This allows the module to be imported without errors during development/testing
+# Azure Functions will load environment variables from local.settings.json before importing
+deep_wiki_agent = None
+code_style_agent = None
 
-# Create CodeStyle agent using ChatAgent
-code_style_agent = ChatAgent(
-    chat_client=responses_client,
-    name="CodeStyleAgent",  # This name is used for routing
-    instructions=_CODE_STYLE_SYSTEM_PROMPT,
-    tools=[vector_search.vector_search],  # Pass the vector search tool
-)
-
-logger.info(f"Created agent: {code_style_agent.name}")
+try:
+    # Check if we're in Azure Functions environment (AZURE_OPENAI_ENDPOINT is set)
+    if os.environ.get("AZURE_OPENAI_ENDPOINT"):
+        agents_list = _create_agents()
+        if len(agents_list) >= 2:
+            deep_wiki_agent = agents_list[0]
+            code_style_agent = agents_list[1]
+            agents = agents_list
+        else:
+            logger.warning("Not all agents were created")
+            agents = agents_list
+    else:
+        # Running in development/test without Azure Functions - create empty list
+        logger.warning("AZURE_OPENAI_ENDPOINT not set - agents will be created when Azure Functions loads")
+        agents = []
+except Exception as e:
+    # If agent creation fails during import, log the error but allow module to load
+    logger.error(f"Failed to create agents during module import: {e}")
+    logger.error("Agents will need to be created manually or on first request")
+    agents = []
 
 # =============================================================================
 # DURABLE FUNCTION APP
@@ -205,39 +234,22 @@ logger.info(f"Created agent: {code_style_agent.name}")
 
 # Create the AgentFunctionApp with both agents
 # This automatically creates Durable Entity-based endpoints:
-#
-# DeepWiki Agent:
-# 1. POST /api/agents/DeepWikiAgent/run - Send messages to the agent
-#    Request: {"message": "Generate wiki", "sessionId": "user-123"}
-#    Response: {"response": "...", "sessionId": "user-123", "status": "success", "message_count": 1}
-# 
-# 2. GET /api/agents/DeepWikiAgent/{sessionId} - Retrieve conversation state
-#    Response: {"message_count": X, "conversation_history": [...], "last_response": "..."}
-#
-# CodeStyle Agent:
-# 1. POST /api/agents/CodeStyleAgent/run - Send messages to the agent
-#    Request: {"message": "Generate style guide", "sessionId": "user-456"}
-#    Response: {"response": "...", "sessionId": "user-456", "status": "success", "message_count": 1}
-# 
-# 2. GET /api/agents/CodeStyleAgent/{sessionId} - Retrieve conversation state
-#    Response: {"message_count": X, "conversation_history": [...], "last_response": "..."}
-#
-# Health Check:
-# 3. GET /api/health - Health check
-#    Response: {"status": "healthy", "agents": [{"name": "DeepWikiAgent", ...}, {"name": "CodeStyleAgent", ...}]}
+# =============================================================================
+# AGENT FUNCTION APP
+# =============================================================================
+# Create the AgentFunctionApp with the agents list
+# This app supports BOTH agent endpoints AND MCP tool triggers
+# MCP tools will be defined in function_app.py using @app.mcp_tool_trigger
 
 app = AgentFunctionApp(
-    agents=[deep_wiki_agent, code_style_agent],
-    enable_health_check=True  # Enables /api/health endpoint
+    agents=agents,
+    enable_health_check=True,
+    enable_http_endpoints=True  # Enable HTTP endpoints for all agents
 )
 
 logger.info("Durable Agents initialized successfully")
-logger.info("Available endpoints:")
-logger.info("  POST /api/agents/DeepWikiAgent/run")
-logger.info("  GET  /api/agents/DeepWikiAgent/{sessionId}")
-logger.info("  POST /api/agents/CodeStyleAgent/run")
-logger.info("  GET  /api/agents/CodeStyleAgent/{sessionId}")
-logger.info("  GET  /api/health")
+logger.info(f"Agents available: {[agent.name if agent else 'None' for agent in [deep_wiki_agent, code_style_agent]]}")
+logger.info("AgentFunctionApp created - ready for agent endpoints and MCP tools")
 
 # =============================================================================
 # ORCHESTRATION FUNCTIONS
@@ -245,6 +257,23 @@ logger.info("  GET  /api/health")
 # Orchestrations allow you to coordinate multiple agent calls in sequence,
 # sharing context between calls through conversation threads.
 # This is useful for complex multi-agent workflows.
+
+def _build_status_url(request_url: str, instance_id: str, *, route: str) -> str:
+    """
+    Construct the status query URI similar to the reference sample.
+    
+    Args:
+        request_url: The original request URL
+        instance_id: The orchestration instance ID
+        route: The route prefix (e.g., "orchestration", "multiagent")
+    
+    Returns:
+        Full status URL
+    """
+    # Extract base URL (everything before /api/)
+    base_url = request_url.split("/api/")[0]
+    return f"{base_url}/api/{route}/status/{instance_id}"
+
 
 @app.orchestration_trigger(context_name="context")
 def documentation_orchestration(context: DurableOrchestrationContext):
@@ -269,42 +298,64 @@ def documentation_orchestration(context: DurableOrchestrationContext):
     """
     # Get input from the orchestration start call
     input_data = context.get_input()
-    user_query = input_data.get("query", "Generate comprehensive documentation") if input_data else "Generate comprehensive documentation"
+    
+    # Handle both string and dict inputs
+    if isinstance(input_data, dict):
+        user_query = input_data.get("query", "Generate comprehensive documentation")
+    elif isinstance(input_data, str):
+        user_query = input_data
+    else:
+        user_query = "Generate comprehensive documentation"
     
     # Get the DeepWiki agent wrapper for orchestration use
-    deep_wiki = context.get_agent("DeepWikiAgent")
-    
-    # Create a new conversation thread for the wiki generation
-    # Note: get_new_thread() is NOT a task, so don't yield it
-    wiki_thread = deep_wiki.get_new_thread()
+    deep_wiki = get_agent(context, "DeepWikiAgent")
     
     # First agent call: Generate initial wiki documentation
     initial_wiki = yield deep_wiki.run(
-        messages=f"{user_query}. Focus on architecture and key patterns.",
-        thread=wiki_thread
+        messages=f"{user_query}. Focus on architecture and key patterns."
     )
     
     # Second agent call: Refine the wiki with additional details
-    # Using the same thread maintains conversation context
     refined_wiki = yield deep_wiki.run(
-        messages="Enhance the documentation with more code examples and best practices.",
-        thread=wiki_thread
+        messages="Enhance the documentation with more code examples and best practices."
     )
     
     # Get the CodeStyle agent for generating complementary style guide
-    code_style = context.get_agent("CodeStyleAgent")
-    style_thread = code_style.get_new_thread()
+    code_style = get_agent(context, "CodeStyleAgent")
     
     # Third agent call: Generate style guide that complements the wiki
     style_guide = yield code_style.run(
-        messages="Generate a style guide that aligns with the patterns discussed in the wiki.",
-        thread=style_thread
+        messages="Generate a style guide that aligns with the patterns discussed in the wiki."
     )
+    
+    # Helper function to extract text from chat client response
+    def extract_text(result):
+        """Extract text from chat client response format."""
+        if not result:
+            return ""
+        
+        # Chat format: result has 'messages' with last message containing 'contents'
+        messages = result.get("messages", []) if isinstance(result, dict) else []
+        if messages:
+            last_message = messages[-1]
+            if isinstance(last_message, dict):
+                contents = last_message.get("contents", [])
+                text_parts = []
+                for content in contents:
+                    if isinstance(content, dict) and "text" in content:
+                        text_parts.append(content["text"])
+                    elif hasattr(content, "text"):
+                        text_parts.append(content.text)
+                if text_parts:
+                    return "".join(text_parts)
+        
+        # Fallback: simple string conversion
+        return str(result)
     
     # Return both outputs
     return {
-        "wiki": refined_wiki.get("response", ""),
-        "styleGuide": style_guide.get("response", ""),
+        "wiki": extract_text(refined_wiki),
+        "styleGuide": extract_text(style_guide),
         "success": True
     }
 
@@ -312,15 +363,22 @@ def documentation_orchestration(context: DurableOrchestrationContext):
 # HTTP trigger to start the documentation orchestration
 @app.route(route="orchestration/documentation", methods=["POST"])
 @app.durable_client_input(client_name="client")
-async def start_documentation_orchestration(req: func.HttpRequest, client):
+async def start_documentation_orchestration(
+    req: func.HttpRequest,
+    client: df.DurableOrchestrationClient,
+) -> func.HttpResponse:
     """
     Start a documentation generation orchestration.
     
     POST /api/orchestration/documentation
     
-    Request Body (optional):
+    Request Body (plain text or JSON):
+    "Generate documentation focusing on API patterns"
+    
+    or
+    
     {
-        "query": "Generate documentation focusing on API patterns"
+        "message": "Generate documentation"
     }
     
     Response:
@@ -331,35 +389,37 @@ async def start_documentation_orchestration(req: func.HttpRequest, client):
     }
     """
     try:
-        # Parse request body if provided
-        input_data = None
-        try:
-            req_body = req.get_json()
-            if req_body:
-                input_data = req_body
-        except ValueError:
-            pass
+        # Parse request body - support both plain text and JSON
+        body_bytes = req.get_body() or b""
+        prompt = body_bytes.decode("utf-8", errors="replace").strip()
+        if not prompt:
+            return func.HttpResponse(
+                body=json.dumps({"error": "Prompt is required"}),
+                status_code=400,
+                mimetype="application/json",
+            )
         
         # Start the orchestration
         instance_id = await client.start_new(
             orchestration_function_name="documentation_orchestration",
-            client_input=input_data
+            client_input=prompt,
         )
         
         logger.info(f"[HTTP] Started documentation orchestration with instance_id: {instance_id}")
         
-        # Build status URL - extract base URL (everything before /api/)
-        base_url = req.url.split("/api/")[0]
-        status_url = f"{base_url}/api/orchestration/status/{instance_id}"
+        # Build status URL similar to the reference sample
+        status_url = _build_status_url(req.url, instance_id, route="orchestration")
+        
+        payload = {
+            "message": "Documentation orchestration started.",
+            "instanceId": instance_id,
+            "statusQueryGetUri": status_url,
+        }
         
         return func.HttpResponse(
-            body=json.dumps({
-                "message": "Documentation orchestration started.",
-                "instanceId": instance_id,
-                "statusQueryGetUri": status_url
-            }),
+            body=json.dumps(payload),
             status_code=202,
-            mimetype="application/json"
+            mimetype="application/json",
         )
     
     except Exception as e:
@@ -367,14 +427,17 @@ async def start_documentation_orchestration(req: func.HttpRequest, client):
         return func.HttpResponse(
             body=json.dumps({"error": str(e)}),
             status_code=500,
-            mimetype="application/json"
+            mimetype="application/json",
         )
 
 
 # HTTP trigger to get orchestration status
 @app.route(route="orchestration/status/{instanceId}", methods=["GET"])
 @app.durable_client_input(client_name="client")
-async def get_orchestration_status(req: func.HttpRequest, client: df.DurableOrchestrationClient):
+async def get_orchestration_status(
+    req: func.HttpRequest,
+    client: df.DurableOrchestrationClient,
+) -> func.HttpResponse:
     """
     Get the status of an orchestration instance.
     
@@ -388,8 +451,7 @@ async def get_orchestration_status(req: func.HttpRequest, client: df.DurableOrch
         "lastUpdatedTime": "2025-10-24T12:05:00",
         "output": {
             "wiki": "# Project Wiki...",
-            "styleGuide": "# Code Style Guide...",
-            "success": true
+            "styleGuide": "# Code Style Guide..."
         }
     }
     """
@@ -400,7 +462,7 @@ async def get_orchestration_status(req: func.HttpRequest, client: df.DurableOrch
             return func.HttpResponse(
                 body=json.dumps({"error": "Missing instanceId"}),
                 status_code=400,
-                mimetype="application/json"
+                mimetype="application/json",
             )
         
         # Get orchestration status
@@ -410,7 +472,7 @@ async def get_orchestration_status(req: func.HttpRequest, client: df.DurableOrch
             return func.HttpResponse(
                 body=json.dumps({"error": "Instance not found"}),
                 status_code=404,
-                mimetype="application/json"
+                mimetype="application/json",
             )
         
         response_data = {
@@ -431,7 +493,7 @@ async def get_orchestration_status(req: func.HttpRequest, client: df.DurableOrch
         return func.HttpResponse(
             body=json.dumps(response_data),
             status_code=200,
-            mimetype="application/json"
+            mimetype="application/json",
         )
     
     except Exception as e:
@@ -439,7 +501,7 @@ async def get_orchestration_status(req: func.HttpRequest, client: df.DurableOrch
         return func.HttpResponse(
             body=json.dumps({"error": str(e)}),
             status_code=500,
-            mimetype="application/json"
+            mimetype="application/json",
         )
 
 
@@ -447,6 +509,7 @@ logger.info("  POST /api/orchestration/documentation - Start documentation orche
 logger.info("  GET  /api/orchestration/status/{instanceId} - Get orchestration status")
 
 # =============================================================================
-# NOTE: Snippet CRUD endpoints are defined in function_app.py
-# They use a separate FunctionApp instance for backwards compatibility
+# NOTE: This app instance is also used in function_app.py
+# All endpoints (HTTP, MCP, agents, orchestrations) are registered on this
+# single AgentFunctionApp instance for unified routing.
 # =============================================================================

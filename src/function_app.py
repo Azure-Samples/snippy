@@ -32,8 +32,13 @@ import azure.functions as func
 from data import cosmos_ops  # Module for Cosmos DB operations
 from tool_helpers import ToolProperty, ToolPropertyList  # Helper classes for tool definitions
 
-# Import the AgentFunctionApp which includes both agents and allows orchestrations
-from agents.durable_agents import app
+# Import the AgentFunctionApp instance and agents from durable_agents module
+# This single app instance handles ALL endpoints:
+# - HTTP triggers (snippet CRUD operations)
+# - MCP tool triggers (AI assistant integration)
+# - Agent endpoints (DeepWikiAgent, CodeStyleAgent)
+# - Orchestration endpoints (multi-agent workflows)
+from durable_agents import app, deep_wiki_agent, code_style_agent
 
 # =============================================================================
 # CONSTANTS
@@ -367,7 +372,7 @@ async def mcp_code_style(context) -> str:
         logging.info("MCP: code_style trigger - invoking CodeStyleAgent directly")
         
         # Import the agent
-        from agents.durable_agents import code_style_agent
+        from durable_agents import code_style_agent
         
         # Parse the context
         mcp_data = json.loads(context)
@@ -387,19 +392,9 @@ async def mcp_code_style(context) -> str:
         # Call the agent directly
         result = await code_style_agent.run(messages=message)
         
-        # Extract the response text from the last message
-        # result.messages is a list of ChatMessage objects
-        # Each message has a 'contents' list containing TextContent objects
-        # We need to extract the text from the TextContent objects
-        response_text = ""
-        if result.messages:
-            last_message = result.messages[-1]
-            if hasattr(last_message, 'contents') and last_message.contents:
-                # Get text from all content items
-                response_text = "".join(
-                    content.text if hasattr(content, 'text') else str(content)
-                    for content in last_message.contents
-                )
+        # Extract the response text
+        # With AzureOpenAIResponsesClient, the result has a simple 'response' field
+        response_text = result.get("response", "") if isinstance(result, dict) else str(result)
         
         logging.info(f"MCP: code_style completed successfully")
         return json.dumps({
@@ -445,7 +440,7 @@ async def mcp_deep_wiki(context) -> str:
         logging.info("MCP: deep_wiki trigger - invoking DeepWikiAgent directly")
         
         # Import the agent
-        from agents.durable_agents import deep_wiki_agent
+        from durable_agents import deep_wiki_agent
         
         # Parse the context
         mcp_data = json.loads(context)
@@ -465,19 +460,9 @@ async def mcp_deep_wiki(context) -> str:
         # Call the agent directly
         result = await deep_wiki_agent.run(messages=message)
         
-        # Extract the response text from the last message
-        # result.messages is a list of ChatMessage objects
-        # Each message has a 'contents' list containing TextContent objects
-        # We need to extract the text from the TextContent objects
-        response_text = ""
-        if result.messages:
-            last_message = result.messages[-1]
-            if hasattr(last_message, 'contents') and last_message.contents:
-                # Get text from all content items
-                response_text = "".join(
-                    content.text if hasattr(content, 'text') else str(content)
-                    for content in last_message.contents
-                )
+        # Extract the response text
+        # With AzureOpenAIResponsesClient, the result has a simple 'response' field
+        response_text = result.get("response", "") if isinstance(result, dict) else str(result)
         
         logging.info(f"MCP: deep_wiki completed successfully")
         return json.dumps({
@@ -499,7 +484,7 @@ async def mcp_deep_wiki(context) -> str:
 @app.mcp_tool_trigger(
     arg_name="context",
     tool_name="generate_comprehensive_documentation",
-    description="Generates comprehensive documentation using multiple AI agents working together in sequence. This orchestration creates both detailed wiki documentation AND a complementary code style guide by coordinating the DeepWiki and CodeStyle agents. Use this when you need complete project documentation that includes architecture, API docs, usage examples, AND coding standards. The optional 'userquery' parameter can focus the documentation on specific topics.",
+    description="Generates comprehensive documentation using multiple AI agents working concurrently. This orchestration creates both detailed wiki documentation AND a code style guide by running the DeepWiki and CodeStyle agents in parallel. Use this when you need complete project documentation that includes architecture, API docs, usage examples, AND coding standards. The optional 'userquery' parameter can focus the documentation on specific topics.",
     tool_properties=tool_properties_comprehensive_docs.to_json(),
 )
 @app.durable_client_input(client_name="client")
@@ -508,11 +493,10 @@ async def mcp_generate_comprehensive_documentation(context, client) -> str:
     MCP tool to generate comprehensive documentation using the documentation_orchestration.
     
     This trigger starts a multi-agent orchestration that:
-    1. Uses DeepWiki agent to generate comprehensive wiki documentation
-    2. Refines the wiki with additional details
-    3. Uses CodeStyle agent to generate a complementary style guide
+    1. Runs DeepWiki and CodeStyle agents concurrently (in parallel)
+    2. Aggregates results from both agents
     
-    The orchestration coordinates the agents in sequence, sharing context between calls.
+    The orchestration uses context.task_all() for concurrent execution.
     """
     try:
         logging.info("MCP: Starting comprehensive documentation generation via orchestration")
@@ -525,15 +509,15 @@ async def mcp_generate_comprehensive_documentation(context, client) -> str:
         
         logging.info(f"MCP: user_query: {user_query}")
         
-        # Prepare input for the orchestration
-        orchestration_input = {"query": user_query}
+        # Pass the prompt directly as a string (matching the updated orchestration pattern)
+        prompt = user_query
         
-        logging.info(f"MCP: About to call client.start_new() with orchestration_input: {orchestration_input}")
+        logging.info(f"MCP: About to call client.start_new() with prompt: {prompt}")
         
         # Start the documentation orchestration
         instance_id = await client.start_new(
             orchestration_function_name="documentation_orchestration",
-            client_input=orchestration_input
+            client_input=prompt
         )
         
         logging.info(f"MCP: Started documentation orchestration with instance_id: {instance_id}")
@@ -586,12 +570,31 @@ async def mcp_generate_comprehensive_documentation(context, client) -> str:
 # =============================================================================
 # DURABLE AGENT ORCHESTRATIONS
 # =============================================================================
-# The AgentFunctionApp (imported from agents/durable_agents.py) automatically
+# The AgentFunctionApp (imported from durable_agents.py) provides all endpoints:
+#
+# Agent Endpoints (auto-created by AgentFunctionApp):
+#   - POST /api/agents/DeepWikiAgent/run - Generate wiki documentation
+#   - POST /api/agents/CodeStyleAgent/run - Generate code style guide
+#   - GET  /api/agents/{AgentName}/{sessionId} - Get conversation history
+#   - GET  /api/health - View all registered agents
+#
+# Orchestration Endpoints (defined in durable_agents.py):
+#   - POST /api/orchestration/documentation - Start multi-agent orchestration
+#   - GET  /api/orchestration/status/{instanceId} - Get orchestration status
+#
+# All endpoints are registered on the same app instance for unified routing.
+# See durable_agents.py for orchestration and agent definitions.
+# =============================================================================
+
+# =============================================================================
+# DURABLE AGENT ORCHESTRATIONS
+# =============================================================================
+# The AgentFunctionApp (imported from durable_agents.py) automatically
 # creates HTTP endpoints for direct agent interaction:
 #   - POST /api/agents/DeepWikiAgent/run
 #   - POST /api/agents/CodeStyleAgent/run
 #   - GET /api/health
 #
 # You can also create orchestrations that use agents via context.get_agent()
-# See agents/durable_agents.py for agent definitions
+# See durable_agents.py for agent definitions
 # =============================================================================

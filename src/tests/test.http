@@ -189,16 +189,20 @@ GET {{endpoint}}/api/agents/CodeStyleAgent/multi-turn-001
 ### ============================================================================
 ### Multi-Agent Orchestration
 ### ============================================================================
-### The documentation orchestration demonstrates coordination of multiple agents
-### in sequence, sharing context between calls
+### The documentation orchestration demonstrates concurrent coordination of multiple agents
+### using context.task_all() to run DeepWiki and CodeStyle agents in parallel
 
-### Start documentation orchestration
+### Start documentation orchestration with plain text prompt
 POST {{endpoint}}/api/orchestration/documentation
-Content-Type: application/json
+Content-Type: text/plain
 
-{
-    "query": "Generate comprehensive documentation focusing on API patterns and best practices"
-}
+Generate comprehensive documentation focusing on API patterns and best practices
+
+### Start documentation orchestration with simple text
+POST {{endpoint}}/api/orchestration/documentation
+Content-Type: text/plain
+
+Create complete documentation with architecture diagrams and coding standards
 
 ### Check orchestration status (replace {instanceId} with actual ID from above response)
 GET {{endpoint}}/api/orchestration/status/{instanceId}
