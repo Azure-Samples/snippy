@@ -178,9 +178,7 @@ Now, you'll use the Azure Developer CLI (azd) to *start* provisioning all the ne
    
    It will run in the background. Proceed immediately to the next step while it runs.
 
-    Run  `azd provision`
-    
-    to provision all the Azure resources needed to run snippy. 
+    Run  `azd provision` to provision all the Azure resources needed to run snippy. 
 
     If prompted, select a location from the terminal to deploy the Azure resources.
 
@@ -230,7 +228,7 @@ Azure Functions provides a serverless platform for building AI-integrated micros
 
 **Target File:** Open ***src/function_app.py*** in VS Code
 
-1. [] Navigate to the **TOOL PROPERTY DEFINITIONS** section (around line 60)
+1. [] Navigate to the **TOOL PROPERTY DEFINITIONS** section (around line 65)
 
 2. [] **Examine how tool properties are defined:**
 
@@ -252,7 +250,7 @@ Azure Functions provides a serverless platform for building AI-integrated micros
 
 ### 5.2 Review: MCP Tool Trigger Binding
 
-1. [] Scroll to the *mcp_save_snippet* function (around line 169)
+1. [] Scroll to the *mcp_save_snippet* function (around line 174)
 
 2. [] **Examine the MCP tool trigger decorator:**
 
@@ -277,7 +275,7 @@ Azure Functions provides a serverless platform for building AI-integrated micros
 
 ### 5.3 Review: Embeddings Input Binding
 
-1. [] Look at the decorator chain above *http_save_snippet* (line 99) and *mcp_save_snippet* (line 175)
+1. [] Look at the decorator chain above *http_save_snippet* (line 105) and *mcp_save_snippet* (line 174)
 
 2. [] **Examine the embeddings input binding:**
 
@@ -304,48 +302,48 @@ Azure Functions provides a serverless platform for building AI-integrated micros
 
 ### 5.4 Review: Durable AI Agents with Microsoft Agent Framework
 
-**Target File:** Open ***src/agents/durable_agents.py***
+**Target File:** Open ***src/durable_agents.py***
 
 This application uses the **Microsoft Agent Framework** with **agent-framework-azurefunctions** to create stateful AI agents.
 
-1. [] **Azure OpenAI Responses Client** (around lines 163-179):
+1. [] **Azure OpenAI Chat Client** (around line 162):
 
     ```python
     # Support both API key and DefaultAzureCredential authentication
     azure_openai_key = os.environ.get("AZURE_OPENAI_KEY")
     if azure_openai_key:
         # Use API key authentication for local development
-        responses_client = AzureOpenAIResponsesClient(
+        chat_client = AzureOpenAIChatClient(
             endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
             deployment_name=os.environ.get("AGENTS_MODEL_DEPLOYMENT_NAME", "gpt-4o-mini"),
             api_key=azure_openai_key,
         )
     else:
         # Use DefaultAzureCredential for production
-        responses_client = AzureOpenAIResponsesClient(
+        chat_client = AzureOpenAIChatClient(
             endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
             deployment_name=os.environ.get("AGENTS_MODEL_DEPLOYMENT_NAME", "gpt-4o-mini"),
             credential=DefaultAzureCredential(),
         )
     ```
 
-    > [!knowledge] **AzureOpenAIResponsesClient:**
-    > - Uses the Azure OpenAI Responses API (newer than completions/chat API)
+    > [!knowledge] **AzureOpenAIChatClient:**
+    > - Uses the Azure OpenAI Chat Completions API
     > - Supports both API key and managed identity authentication
     > - Configured with the model deployment name from environment variables
 
-2. [] **Agent Definition with ChatAgent** (around lines 183-198):
+2. [] **Agent Definition with ChatAgent** (around line 182):
 
     ```python
     deep_wiki_agent = ChatAgent(
-        chat_client=responses_client,
+        chat_client=chat_client,
         name="DeepWikiAgent",
         instructions=_DEEP_WIKI_SYSTEM_PROMPT,
         tools=[vector_search.vector_search],
     )
     
     code_style_agent = ChatAgent(
-        chat_client=responses_client,
+        chat_client=chat_client,
         name="CodeStyleAgent",
         instructions=_CODE_STYLE_SYSTEM_PROMPT,
         tools=[vector_search.vector_search],
@@ -354,18 +352,19 @@ This application uses the **Microsoft Agent Framework** with **agent-framework-a
 
     > [!knowledge] **ChatAgent (Microsoft Agent Framework):**
     > - `ChatAgent` is the core agent abstraction from Microsoft Agent Framework
-    > - `chat_client` - The AzureOpenAIResponsesClient that executes the agent
+    > - `chat_client` - The AzureOpenAIChatClient that executes the agent
     > - `name` - Used for routing and identification
     > - `instructions` - The system prompt that defines agent behavior
     > - `tools` - List of Python functions the agent can call (e.g., `vector_search.vector_search`)
     > - The framework automatically discovers tool schemas from function signatures and docstrings
 
-3. [] **AgentFunctionApp** (around lines 229-232):
+3. [] **AgentFunctionApp** (around line 244):
 
     ```python
     app = AgentFunctionApp(
-        agents=[deep_wiki_agent, code_style_agent],
-        enable_health_check=True
+        agents=agents,
+        enable_health_check=True,
+        enable_http_endpoints=True  # Enable HTTP endpoints for all agents
     )
     ```
 
@@ -376,99 +375,48 @@ This application uses the **Microsoft Agent Framework** with **agent-framework-a
     > - `GET /api/agents/DeepWikiAgent/{sessionId}` - Get conversation state
     > - `GET /api/agents/CodeStyleAgent/{sessionId}` - Get conversation state
     > - `GET /api/health` - Health check endpoint
-    > 
+    >
     > State is automatically persisted using Durable Entities, so conversation history is maintained across calls.
 
-4. [] **Agent Invocation from MCP Triggers** (in *function_app.py*, around lines 370-402):
-
-    ```python
-    # Import the agent (created in durable_agents.py)
-    from agents.durable_agents import code_style_agent
-    
-    # Parse MCP context
-    mcp_data = json.loads(context)
-    args = mcp_data.get("arguments", {})
-    
-    # Build message
-    chat_history = args.get(_CHAT_HISTORY_PROPERTY_NAME, "")
-    user_query = args.get(_USER_QUERY_PROPERTY_NAME, "")
-    
-    if chat_history and user_query:
-        message = f"Context: {chat_history}\n\nQuery: {user_query}"
-    elif user_query:
-        message = user_query
-    else:
-        message = "Generate a comprehensive code style guide based on the code snippets."
-    
-    # Call the agent's run method
-    result = await code_style_agent.run(messages=message)
-    
-    # Extract response from the result
-    response_text = ""
-    if result.messages:
-        last_message = result.messages[-1]
-        if hasattr(last_message, 'contents') and last_message.contents:
-            response_text = "".join(
-                content.text if hasattr(content, 'text') else str(content)
-                for content in last_message.contents
-            )
-    ```
-
-    > [!knowledge] **How Agents Execute:**
-    > - Call `agent.run(messages=message)` to execute
-    > - The framework handles the complete lifecycle:
-    >   1. Sends message to Azure OpenAI via AzureOpenAIResponsesClient
-    >   2. If the LLM wants to call a tool (like `vector_search`), the framework executes it
-    >   3. Tool results are sent back to the LLM
-    >   4. Process repeats until the agent has a final answer
-    > - Returns `AgentRunResult` with the conversation messages
-    > - Extract text from `result.messages[-1].contents`
-
-5. [] **Multi-Agent Orchestration** (in *durable_agents.py*, around lines 249-309):
+4. [] **Multi-Agent Orchestration** (around line 279):
 
     ```python
     @app.orchestration_trigger(context_name="context")
     def documentation_orchestration(context: DurableOrchestrationContext):
         """Orchestration that chains multiple agent calls."""
         
-        # Get agent wrapper for orchestration
-        deep_wiki = context.get_agent("DeepWikiAgent")
+        # Get the DeepWiki agent wrapper for orchestration use
+        deep_wiki = get_agent(context, "DeepWikiAgent")
         
-        # Create new conversation thread
-        wiki_thread = deep_wiki.get_new_thread()
-        
-        # First call: Initial documentation
+        # First agent call: Generate initial wiki documentation
         initial_wiki = yield deep_wiki.run(
-            messages=f"{user_query}. Focus on architecture and key patterns.",
-            thread=wiki_thread
+            messages=f"{user_query}. Focus on architecture and key patterns."
         )
         
-        # Second call: Refinement (same thread maintains context)
+        # Second agent call: Refine the wiki with additional details
         refined_wiki = yield deep_wiki.run(
-            messages="Enhance the documentation with more code examples.",
-            thread=wiki_thread
+            messages="Enhance the documentation with more code examples and best practices."
         )
         
-        # Third call: Different agent
-        code_style = context.get_agent("CodeStyleAgent")
-        style_thread = code_style.get_new_thread()
+        # Get the CodeStyle agent for generating complementary style guide
+        code_style = get_agent(context, "CodeStyleAgent")
         
+        # Third agent call: Generate style guide that complements the wiki
         style_guide = yield code_style.run(
-            messages="Generate a style guide that aligns with the patterns discussed.",
-            thread=style_thread
+            messages="Generate a style guide that aligns with the patterns discussed in the wiki."
         )
         
         return {
-            "wiki": refined_wiki.get("response", ""),
-            "styleGuide": style_guide.get("response", "")
+            "wiki": extract_text(refined_wiki),
+            "styleGuide": extract_text(style_guide),
+            "success": True
         }
     ```
 
     > [!knowledge] **Orchestration Pattern:**
-    > - Use `context.get_agent(name)` to get an agent wrapper for orchestration
-    > - `get_new_thread()` creates a conversation thread (NOT a task, don't yield it)
+    > - Use `get_agent(context, name)` to get an agent wrapper for orchestration
     > - `yield agent.run(...)` executes the agent as a Durable Functions activity
-    > - Using the same thread across calls maintains conversation context
+    > - Sequential calls to the same agent automatically share conversation context
     > - Different agents can be coordinated in sequence
     > - All state is automatically persisted by Durable Functions
 
@@ -479,7 +427,7 @@ This application uses the **Microsoft Agent Framework** with **agent-framework-a
 | Aspect | This Implementation | Direct Azure AI Agents Service |
 |--------|---------------------|--------------------------------|
 | **Agent Class** | `ChatAgent` (Microsoft Agent Framework) | `AIProjectClient.agents.create_agent()` |
-| **Client** | `AzureOpenAIResponsesClient` | `AIProjectClient` |
+| **Client** | `AzureOpenAIChatClient` | `AIProjectClient` |
 | **Tool Discovery** | Automatic from Python functions | Manual tool definitions |
 | **State Management** | Automatic via Durable Entities | Manual via threads |
 | **Lifecycle** | Simple `agent.run()` | Manual create/run/poll loop |
@@ -490,7 +438,7 @@ This application uses the **Microsoft Agent Framework** with **agent-framework-a
 
 ### 5.5 Review: Vector Search Tool
 
-**Target File:** Open ***src/agents/tools/vector_search.py***
+**Target File:** Open ***src/tools/vector_search.py***
 
 The `vector_search` function demonstrates how agents use tools. It's a standard Python async function that the agent framework automatically discovers and makes available to agents:
 
