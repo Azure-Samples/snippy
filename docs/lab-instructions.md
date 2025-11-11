@@ -855,7 +855,7 @@ Finally, configure VS Code and Copilot Chat to use the tools running on your *de
     Use the *$appName* value for the *functionapp-name* input, and paste the system key you retrieved earlier using:
 
     ```powershell
-     az functionapp keys list -n $appName --query "systemKeys.mcp_extension" -g rg-snippymcplab --output tsv
+     az functionapp keys list -n $appName --query "systemKeys.mcp_extension" -g rg-snippymcplab-@lab.labinstance.id --output tsv
     ```
 
      This setup allows the cloud-hosted MCP to receive and stream events securily.
