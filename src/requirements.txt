@@ -1,15 +1,14 @@
 # Azure Functions runtime and core dependencies
 azure-functions>=1.24.0
-azure-functions-durable>=1.2.4  # Durable Functions for orchestrations
-agent-framework-azurefunctions  # Durable agent framework for Azure Functions (pre-release)
-agent-framework                 # Microsoft Agent Framework for AI agents (use --prerelease=allow when installing)
+agent-framework-azurefunctions  # Durable agent framework for Azure Functions (includes agent-framework)
+azure-identity                  # For Azure authentication (DefaultAzureCredential)
+packaging                       # Required by agent-framework-azurefunctions
 
 # Azure service SDKs
 azure-storage-blob              # For blob storage operations
 azure-cosmos                    # For Cosmos DB operations
-azure-identity                  # For Azure authentication (DefaultAzureCredential)
 azure-ai-inference              # For the EmbeddingsClient type hint and operations
-openai                          # OpenAI SDK for embeddings
+openai                          # OpenAI SDK for embeddings (for Azure OpenAI)
 
 # Testing frameworks
 pytest                          # Core testing framework
