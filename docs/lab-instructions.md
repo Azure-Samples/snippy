@@ -150,14 +150,6 @@ Now, you'll use the Azure Developer CLI (azd) to *start* provisioning all the ne
    
    Follow the prompts to authenticate in your browser. Close the browser tab after successful login and return to VS Code.
 
-	>[!alert] You may see warnings that your version of azd is out of date. You can run the following command to update azd. The process only takes a minute or two.
-    >
-    >winget upgrade Microsoft.Azd
-    >
-    > [!note] If successful, in VSCode Terminal, you should see *Logged in to Azure as **@lab.CloudPortalCredential(User1).Username***
-
-
-
 3. [] **Set up the azd Environment:**
 
   An azd environment stores configuration details like subscription ID and location. Create a new environment for this lab (this will be unique to each lab environment):
@@ -386,7 +378,7 @@ This application uses the **Microsoft Agent Framework** with **agent-framework-a
         """Orchestration that chains multiple agent calls."""
         
         # Get the DeepWiki agent wrapper for orchestration use
-        deep_wiki = get_agent(context, "DeepWikiAgent")
+        deep_wiki = app.get_agent(context, "DeepWikiAgent")
         
         # First agent call: Generate initial wiki documentation
         initial_wiki = yield deep_wiki.run(
@@ -399,7 +391,7 @@ This application uses the **Microsoft Agent Framework** with **agent-framework-a
         )
         
         # Get the CodeStyle agent for generating complementary style guide
-        code_style = get_agent(context, "CodeStyleAgent")
+        code_style = app.get_agent(context, "CodeStyleAgent")
         
         # Third agent call: Generate style guide that complements the wiki
         style_guide = yield code_style.run(
@@ -500,7 +492,7 @@ Let's first install the Python packages required by the Function App:
 
 4. [] Install the required Python packages:
    
-    `uv pip install -r requirements.txt --prerelease=allow`
+    `uv pip install -r requirements.txt`
 
 > [!note]
 > We'll start the Functions host after verifying that all required settings are available from the provisioning process.
@@ -1019,7 +1011,7 @@ You've explored how Microsoft Agent Framework enables sophisticated AI agent cap
 ### 5. Durable Functions Orchestration
 You've learned how Durable Functions orchestrates complex, stateful workflows:
 - Creating orchestrations that coordinate multiple AI agents in sequence
-- Using `context.get_agent()` to access agent wrappers within orchestrations
+- Using `app.get_agent()` to access agent wrappers within orchestrations
 - Managing conversation threads across multiple agent calls to maintain context
 - Monitoring orchestration state and progress through the Durable Task Scheduler dashboard
 
