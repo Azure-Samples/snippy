@@ -31,7 +31,7 @@ import json
 import azure.functions as func
 import azure.durable_functions as df
 from azure.durable_functions import DurableOrchestrationContext
-from agent_framework_azurefunctions import AgentFunctionApp, get_agent
+from agent_framework_azurefunctions import AgentFunctionApp
 from agent_framework import ChatAgent  # Microsoft Agent Framework
 from agent_framework.azure import AzureOpenAIChatClient  # Azure OpenAI Chat client
 from azure.identity import DefaultAzureCredential  # For RBAC authentication
@@ -281,9 +281,9 @@ def documentation_orchestration(context: DurableOrchestrationContext):
     Orchestration that generates comprehensive documentation by chaining agent calls.
     
     This demonstrates:
-    1. Getting an agent wrapper using context.get_agent()
-    2. Creating a new conversation thread
-    3. Making sequential agent calls with shared thread context
+    1. Getting an agent wrapper using app.get_agent()
+    2. Making sequential agent calls that share conversation context
+    3. Coordinating multiple agents in a single orchestration
     4. Each call builds on the previous response
     
     Example workflow:
@@ -308,7 +308,7 @@ def documentation_orchestration(context: DurableOrchestrationContext):
         user_query = "Generate comprehensive documentation"
     
     # Get the DeepWiki agent wrapper for orchestration use
-    deep_wiki = get_agent(context, "DeepWikiAgent")
+    deep_wiki = app.get_agent(context, "DeepWikiAgent")
     
     # First agent call: Generate initial wiki documentation
     initial_wiki = yield deep_wiki.run(
@@ -321,7 +321,7 @@ def documentation_orchestration(context: DurableOrchestrationContext):
     )
     
     # Get the CodeStyle agent for generating complementary style guide
-    code_style = get_agent(context, "CodeStyleAgent")
+    code_style = app.get_agent(context, "CodeStyleAgent")
     
     # Third agent call: Generate style guide that complements the wiki
     style_guide = yield code_style.run(

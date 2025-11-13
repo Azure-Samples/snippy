@@ -6,6 +6,7 @@
 
 import os
 import logging
+import asyncio
 from azure.cosmos.aio import CosmosClient
 from azure.cosmos import PartitionKey
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -19,36 +20,45 @@ COSMOS_DATABASE_NAME = os.environ.get("COSMOS_DATABASE_NAME", "dev-snippet-db")
 COSMOS_CONTAINER_NAME = os.environ.get("COSMOS_CONTAINER_NAME", "code-snippets")
 COSMOS_VECTOR_TOP_K = int(os.environ.get("COSMOS_VECTOR_TOP_K", "30"))
 
-# Singleton references for client, database, and container caching
-# This ensures we reuse connections across calls
-_cosmos_client = None
-_database = None
-_container = None
+# Per-event-loop storage for client, database, and container
+# This prevents "attached to a different loop" errors when tools are called from agent framework
+_clients = {}
+_databases = {}
+_containers = {}
 
-# Gets or creates the singleton Cosmos client, caching it for reuse
+def _get_loop_id():
+    """Get a unique identifier for the current event loop."""
+    try:
+        loop = asyncio.get_running_loop()
+        return id(loop)
+    except RuntimeError:
+        return None
+
+# Gets or creates the Cosmos client for the current event loop
 async def get_cosmos_client():
     """
-    Gets or creates the singleton Cosmos client.
+    Gets or creates the Cosmos client for the current event loop.
+    This prevents event loop conflicts when called from different async contexts.
     """
-    global _cosmos_client
-    if _cosmos_client is None:
-        logger.debug("Creating Cosmos client")
-        _cosmos_client = CosmosClient(
+    loop_id = _get_loop_id()
+    if loop_id not in _clients:
+        logger.debug(f"Creating Cosmos client for loop {loop_id}")
+        _clients[loop_id] = CosmosClient(
             url=os.environ["COSMOS_ENDPOINT"],
             credential=DefaultAzureCredential()
         )
-    return _cosmos_client
+    return _clients[loop_id]
 
-# Gets or creates the singleton Cosmos database reference
+# Gets or creates the Cosmos database reference for the current event loop
 async def get_database():
     """
-    Gets or creates the singleton database.
+    Gets or creates the database for the current event loop.
     """
-    global _database
-    if _database is None:
+    loop_id = _get_loop_id()
+    if loop_id not in _databases:
         client = await get_cosmos_client()
-        _database = await client.create_database_if_not_exists(COSMOS_DATABASE_NAME)
-    return _database
+        _databases[loop_id] = await client.create_database_if_not_exists(COSMOS_DATABASE_NAME)
+    return _databases[loop_id]
 
 # Gets or creates the Cosmos DB container with proper partition key and vector index configuration
 # The container is set up with a partition on /name and a vectorEmbeddingPolicy on /embedding
@@ -67,8 +77,8 @@ async def get_container():
     Raises:
         Exception: If container creation or configuration fails
     """
-    global _container
-    if _container is None:
+    loop_id = _get_loop_id()
+    if loop_id not in _containers:
         try:
             logger.info(f"Getting container '{COSMOS_CONTAINER_NAME}' from database '{COSMOS_DATABASE_NAME}'")
             
@@ -76,7 +86,7 @@ async def get_container():
             
             # Create container with vector index configuration
             logger.debug("Creating container with vector index configuration")
-            _container = await database.create_container_if_not_exists(
+            _containers[loop_id] = await database.create_container_if_not_exists(
                 id=COSMOS_CONTAINER_NAME,
                 partition_key=PartitionKey(path="/name"),
                 indexing_policy={
@@ -109,20 +119,22 @@ async def get_container():
         except Exception as e:
             logger.error(f"Error configuring Cosmos container: {str(e)}", exc_info=True)
             raise
-    return _container
+    return _containers[loop_id]
 
-# Closes all Cosmos DB connections and resets cached client, database, and container
+# Closes all Cosmos DB connections for the current event loop
 async def close_connections():
     """
-    Closes all Cosmos DB connections.
+    Closes Cosmos DB connections for the current event loop.
     """
-    global _cosmos_client, _database, _container
-    if _cosmos_client is not None:
-        await _cosmos_client.close()
-        _cosmos_client = None
-        _database = None
-        _container = None
-        logger.info("Closed Cosmos DB connections")
+    loop_id = _get_loop_id()
+    if loop_id in _clients:
+        await _clients[loop_id].close()
+        del _clients[loop_id]
+        if loop_id in _databases:
+            del _databases[loop_id]
+        if loop_id in _containers:
+            del _containers[loop_id]
+        logger.info(f"Closed Cosmos DB connections for loop {loop_id}")
 
 # Upserts a document into Cosmos DB with vector embeddings
 # The document includes id, name, projectId, code, type, and embedding fields
