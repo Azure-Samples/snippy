@@ -19,10 +19,10 @@ logging.getLogger("azure").setLevel(logging.WARNING)
 # Args:
 #     query: The search query text (plain language or code fragment)
 #     k: Number of top matches to return
-#     project_id: The project ID to scope the search
+#     project_id: The project ID to scope the search (use "*" for all projects)
 # Returns:
 #     JSON string of matching snippets with their IDs, code, and similarity scores
-async def vector_search(query: str, k: int = 30, project_id: str = "default-project") -> str:
+async def vector_search(query: str, k: int = 30, project_id: str = "*") -> str:
     """
     Performs vector similarity search on code snippets.
     
@@ -85,10 +85,17 @@ async def vector_search(query: str, k: int = 30, project_id: str = "default-proj
                     project_id=project_id,
                     k=k
                 )
-                logger.info("Found %d similar snippets", len(results))
+
+                # If no results, provide helpful message
+                if not results:
+                    logger.warning("No snippets found for query: '%s'", query)
+                    return json.dumps({
+                        "message": "No code snippets found in the database. Please save some snippets first.",
+                        "results": []
+                    })
 
                 # Return the search results as a JSON string
-                return json.dumps(results)
+                return json.dumps({"results": results, "count": len(results)})
 
     except Exception as e:
         # Log any errors and return an error payload
