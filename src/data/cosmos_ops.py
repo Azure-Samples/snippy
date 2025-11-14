@@ -102,16 +102,22 @@ async def get_container():
                             "path": "/embedding/*"
                         }
                     ],
-                    "vectorEmbeddingPolicy": {
-                        "vectorEmbeddings": [
-                            {
-                                "path": "/embedding",
-                                "dataType": "int8",
-                                "dimensions": 1536,
-                                "distanceFunction": "cosine"
-                            }
-                        ]
-                    }
+                    "vectorIndexes": [
+                        {
+                            "path": "/embedding",
+                            "type": "quantizedFlat"
+                        }
+                    ]
+                },
+                vector_embedding_policy={
+                    "vectorEmbeddings": [
+                        {
+                            "path": "/embedding",
+                            "dataType": "float32",
+                            "dimensions": 1536,
+                            "distanceFunction": "cosine"
+                        }
+                    ]
                 }
             )
             
@@ -266,23 +272,41 @@ async def query_similar_snippets(
         params = [
             {"name": "@vec", "value": query_vector},
             {"name": "@k", "value": k},
-            {"name": "@pid", "value": project_id},
         ]
 
-        sql = (
-            "SELECT TOP @k c.id, c.code, "
+        # First try with project filter, then fall back to all projects if no results
+        sql_with_project = (
+            "SELECT TOP @k c.id, c.name, c.projectId, c.code, "
             "VectorDistance(c.embedding, @vec) AS score "
             "FROM c WHERE c.projectId = @pid "
             "ORDER BY VectorDistance(c.embedding, @vec)"
         )
+        
+        sql_all_projects = (
+            "SELECT TOP @k c.id, c.name, c.projectId, c.code, "
+            "VectorDistance(c.embedding, @vec) AS score "
+            "FROM c "
+            "ORDER BY VectorDistance(c.embedding, @vec)"
+        )
 
-        logger.debug(f"Executing SQL query: {sql}")
+        # Try project-scoped search first
+        logger.debug(f"Executing project-scoped query for project_id: {project_id}")
         items_iterable = container.query_items(
-            query=sql,
-            parameters=params
+            query=sql_with_project,
+            parameters=params + [{"name": "@pid", "value": project_id}]
         )
         
         results = [item async for item in items_iterable]
+        
+        # If no results with project filter, search all projects
+        if not results:
+            logger.info(f"No results found for project '{project_id}', searching all projects")
+            items_iterable = container.query_items(
+                query=sql_all_projects,
+                parameters=params
+            )
+            results = [item async for item in items_iterable]
+        
         logger.info(f"Found {len(results)} similar snippets")
         
         return results
