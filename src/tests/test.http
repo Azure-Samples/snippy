@@ -68,11 +68,8 @@ GET {{endpoint}}/api/snippets/complex-snippet
 ### Health Check - View all registered agents
 GET {{endpoint}}/api/health
 
-### ============================================================================
-### DeepWiki Agent - Comprehensive Wiki Documentation Generation
-### ============================================================================
 
-### Generate wiki with new session (auto-generated sessionId)
+### Generate wiki
 POST {{endpoint}}/api/agents/DeepWikiAgent/run
 Content-Type: application/json
 
@@ -80,41 +77,8 @@ Content-Type: application/json
     "message": "Generate a comprehensive wiki documentation for all code snippets in the project"
 }
 
-### Generate wiki with specific session ID
-POST {{endpoint}}/api/agents/DeepWikiAgent/run
-Content-Type: application/json
 
-{
-    "message": "Generate a comprehensive wiki documentation for all code snippets",
-    "sessionId": "wiki-session-001"
-}
-
-### Generate wiki with context and query
-POST {{endpoint}}/api/agents/DeepWikiAgent/run
-Content-Type: application/json
-
-{
-    "message": "Context: We have Python code snippets for Azure Functions with vector search and AI agent integration.\n\nQuery: Generate comprehensive wiki documentation that includes architecture diagrams, API documentation, and usage examples.",
-    "sessionId": "wiki-session-002"
-}
-
-### Continue conversation in existing session
-POST {{endpoint}}/api/agents/DeepWikiAgent/run
-Content-Type: application/json
-
-{
-    "message": "Can you add more details about the error handling patterns?",
-    "sessionId": "wiki-session-002"
-}
-
-### Retrieve conversation history for a session
-GET {{endpoint}}/api/agents/DeepWikiAgent/wiki-session-002
-
-### ============================================================================
-### CodeStyle Agent - Code Style Guide Generation
-### ============================================================================
-
-### Generate code style guide with new session
+### Generate code style guide
 POST {{endpoint}}/api/agents/CodeStyleAgent/run
 Content-Type: application/json
 
@@ -122,69 +86,13 @@ Content-Type: application/json
     "message": "Generate a comprehensive code style guide based on the code snippets"
 }
 
-### Generate code style guide with specific session ID
-POST {{endpoint}}/api/agents/CodeStyleAgent/run
-Content-Type: application/json
-
-{
-    "message": "Generate a comprehensive code style guide for Python Azure Functions",
-    "sessionId": "style-session-001"
-}
-
-### Generate focused style guide
-POST {{endpoint}}/api/agents/CodeStyleAgent/run
-Content-Type: application/json
-
-{
-    "message": "Context: We're building Azure Functions with Python v2 programming model, using async/await patterns, type hints, and agent-framework.\n\nQuery: Generate a code style guide that covers naming conventions, error handling, logging, and documentation standards.",
-    "sessionId": "style-session-002"
-}
-
-### Ask follow-up question in existing session
-POST {{endpoint}}/api/agents/CodeStyleAgent/run
-Content-Type: application/json
-
-{
-    "message": "What about async function naming conventions?",
-    "sessionId": "style-session-002"
-}
-
-### Retrieve conversation history for code style session
-GET {{endpoint}}/api/agents/CodeStyleAgent/style-session-002
-
-### ============================================================================
-### Advanced Agent Testing Scenarios
-### ============================================================================
-
 ### Test agent with tool calling (vector search)
 POST {{endpoint}}/api/agents/DeepWikiAgent/run
 Content-Type: application/json
 
 {
-    "message": "Search for code snippets related to 'authentication' and 'error handling', then generate documentation for those patterns",
-    "sessionId": "advanced-001"
+    "message": "Search for code snippets related to 'authentication' and 'error handling', then generate documentation for those patterns"
 }
-
-### Test multi-turn conversation
-POST {{endpoint}}/api/agents/CodeStyleAgent/run
-Content-Type: application/json
-
-{
-    "message": "First, analyze all the code snippets and identify the main coding patterns",
-    "sessionId": "multi-turn-001"
-}
-
-### Follow-up in multi-turn conversation
-POST {{endpoint}}/api/agents/CodeStyleAgent/run
-Content-Type: application/json
-
-{
-    "message": "Now, create a style guide focusing on those patterns you identified",
-    "sessionId": "multi-turn-001"
-}
-
-### Check the full conversation
-GET {{endpoint}}/api/agents/CodeStyleAgent/multi-turn-001
 
 ### ============================================================================
 ### Multi-Agent Orchestration
@@ -198,53 +106,5 @@ Content-Type: text/plain
 
 Generate comprehensive documentation focusing on API patterns and best practices
 
-### Start documentation orchestration with simple text
-POST {{endpoint}}/api/orchestration/documentation
-Content-Type: text/plain
-
-Create complete documentation with architecture diagrams and coding standards
-
 ### Check orchestration status (replace {instanceId} with actual ID from above response)
 GET {{endpoint}}/api/orchestration/status/{instanceId}
-
-### ============================================================================
-### Real-World Testing Scenarios
-### ============================================================================
-
-### Save a Python Azure Function snippet
-POST {{endpoint}}/api/snippets
-Content-Type: application/json
-
-{
-    "name": "http-trigger-example",
-    "projectId": "azure-functions",
-    "code": "import azure.functions as func\nimport logging\n\ndef main(req: func.HttpRequest) -> func.HttpResponse:\n    logging.info('Processing HTTP request')\n    name = req.params.get('name')\n    if not name:\n        try:\n            req_body = req.get_json()\n            name = req_body.get('name')\n        except ValueError:\n            pass\n    if name:\n        return func.HttpResponse(f'Hello, {name}!')\n    else:\n        return func.HttpResponse('Please pass a name', status_code=400)"
-}
-
-### Save a vector search snippet
-POST {{endpoint}}/api/snippets
-Content-Type: application/json
-
-{
-    "name": "vector-search-example",
-    "projectId": "cosmos-db",
-    "code": "from azure.cosmos import CosmosClient\nimport numpy as np\n\ndef search_similar_code(query_embedding, top_k=5):\n    client = CosmosClient.from_connection_string(conn_str)\n    database = client.get_database_client('code-db')\n    container = database.get_container_client('snippets')\n    \n    query = '''\n    SELECT TOP @top_k c.id, c.code, \n           VectorDistance(c.embedding, @embedding) AS similarity\n    FROM c\n    ORDER BY VectorDistance(c.embedding, @embedding)\n    '''\n    \n    items = container.query_items(\n        query=query,\n        parameters=[\n            {'name': '@top_k', 'value': top_k},\n            {'name': '@embedding', 'value': query_embedding}\n        ]\n    )\n    return list(items)"
-}
-
-### Generate wiki for all Python snippets
-POST {{endpoint}}/api/agents/DeepWikiAgent/run
-Content-Type: application/json
-
-{
-    "message": "Generate comprehensive wiki documentation for all Python code snippets. Include architecture diagrams showing how the components interact.",
-    "sessionId": "python-wiki-001"
-}
-
-### Generate targeted style guide for async code
-POST {{endpoint}}/api/agents/CodeStyleAgent/run
-Content-Type: application/json
-
-{
-    "message": "Analyze all async/await patterns in the code snippets and create a style guide specifically for asynchronous Python code in Azure Functions.",
-    "sessionId": "async-style-001"
-}
