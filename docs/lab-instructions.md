@@ -298,7 +298,7 @@ Azure Functions provides a serverless platform for building AI-integrated micros
 
 This application uses the **Microsoft Agent Framework** with **agent-framework-azurefunctions** to create stateful AI agents.
 
-1. [] **Azure OpenAI Chat Client** (around line 162):
+1. [] **Azure OpenAI Chat Client** (around line 135):
 
     ```python
     # Support both API key and DefaultAzureCredential authentication
@@ -324,7 +324,7 @@ This application uses the **Microsoft Agent Framework** with **agent-framework-a
     > - Supports both API key and managed identity authentication
     > - Configured with the model deployment name from environment variables
 
-2. [] **Agent Definition with ChatAgent** (around line 182):
+2. [] **Agent Definition with ChatAgent** (around line 155):
 
     ```python
     deep_wiki_agent = ChatAgent(
@@ -350,7 +350,7 @@ This application uses the **Microsoft Agent Framework** with **agent-framework-a
     > - `tools` - List of Python functions the agent can call (e.g., `vector_search.vector_search`)
     > - The framework automatically discovers tool schemas from function signatures and docstrings
 
-3. [] **AgentFunctionApp** (around line 244):
+3. [] **AgentFunctionApp** (around line 217):
 
     ```python
     app = AgentFunctionApp(
@@ -370,7 +370,7 @@ This application uses the **Microsoft Agent Framework** with **agent-framework-a
     >
     > State is automatically persisted using Durable Entities, so conversation history is maintained across calls.
 
-4. [] **Multi-Agent Orchestration** (around line 279):
+4. [] **Multi-Agent Orchestration** (around line 251):
 
     ```python
     @app.orchestration_trigger(context_name="context")
