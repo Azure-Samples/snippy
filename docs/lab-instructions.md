@@ -6,7 +6,6 @@
 
 Log in to the Windows 11 lab VM with the credentials below.
 
-- **Username:** **+++@lab.VirtualMachine(Win11-Pro-Base).Username+++**
 - **Password:** **+++@lab.VirtualMachine(Win11-Pro-Base).Password+++**
 
 >[!Alert] After you sign in to the VM, you may see a window that asks you to protect your files and memories by backing up your PC. If you see this window, select **Opt-out of backup**. Then, on the **Backup is recommended** page, select **Skip for now**. 
@@ -51,16 +50,13 @@ Your lab environment comes pre-configured with the necessary software:
 - Azure Developer CLI (AZD) for simplified deployment workflows
 - Docker for the Durable Task emulator and Azurite support
 
-
-> [+hint] Ignore any blue "Sign in required" notification stating... 
->> "Your device is having problems with your work or school account" or an "Activate Windows" watermark at the bottom right of the screen. Simply select "Not now" on any prompts and continue with the lab. These notifications will not affect your lab experience.
-> <br>
-> > !IMAGE[0-sign-in.png](instructions291323/0-sign-in.png)
-
 From your lab environment's Desktop (or Taskbar), open **Edge - Snippy & Portal** shortcut, which opens three tabs you'll need:
 1. [] **Snippy Lab GitHub Repo:** Source code (*https://aka.ms/functions-mcp-lab*).
 2. [] **Azure Portal:** (*https://portal.azure.com*).
 3. [] **Azure AI Foundry:** (*https://ai.azure.com*).
+
+> [!note]
+> When you open the Azure Portal and Azure Foundry tabs, you may see login pages. Don't worry about signing in yet - you'll receive the Azure credentials in **Step 4** when you begin the resource provisioning process. For now, you can leave these tabs open in the background.
 
 ===
 
@@ -117,72 +113,64 @@ After signing into GitHub, go back to VS Code and complete the Copilot setup:
 
    !IMAGE[SnippyLab-GH-Model](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-Model.png)
  
-
-> [+hint] (Optional) MCP Server Access Restriction Workaround
->
-> If your organization has disabled MCP server functionality via GitHub policy settings in the admin console, you may not be able to test the MCP tools in later exercises. This restriction affects how GitHub Copilot can connect to external MCP endpoints.
-> 
-> **Workarounds:**
-> - Use a GitHub account that is not managed by your organization
-> - Use the MCP Inspector tool (instructions will be provided in the optional section later in the lab)
-> 
-> This will only affect the MCP tool testing portions - all other parts of the lab will work normally regardless of policy settings.
-
 ===
 
 ## **4** - Start resource provisioning with azd (runs in background)
 
 Now, you'll use the Azure Developer CLI (azd) to *start* provisioning all the necessary Azure resources for Snippy. This process takes several minutes (5-10) and will run in the background while you work on the coding exercises.
 
-1. [] **Login to azd:**
-    Open your terminal inside VS Code (*View → Terminal*) and log in to Azure (ensure you are in the *snippy* root directory):
+1. [] Open your terminal inside VS Code (*View → Terminal*) and log in to Azure (ensure you are in the *snippy* root directory):
     
 	!IMAGE[SnippyLab-VS-Terminal](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-VS-Terminal.png)
 
-    `azd auth login`
+2. [] **Login to azd:**
 
-2. [] Use the following credentials to sign in: 
+   `azd auth login`
+
+3. [] Select the same account used previously, if available. 
+
+	If the account is not available, use the following credentials to sign in: 
 
     | Item                  | Value                                        |
     |:----------------------|:---------------------------------------------|
     | Username              | `@lab.CloudPortalCredential(User1).Username` |
     | Temporary Access Pass | `@lab.CloudPortalCredential(User1).TAP`      |
    
-   Follow the prompts to authenticate in your browser. Close the browser tab after successful login and return to VS Code.
+   Return to VS Code after login.
 
-3. [] **Set up the azd Environment:**
+4. [] **Set up the azd Environment:**
 
   An azd environment stores configuration details like subscription ID and location. Create a new environment for this lab (this will be unique to each lab environment):
 
-    `azd env new snippymcplab-@lab.labinstance.id --subscription @lab.cloudsubscription.id`
+  `azd env new snippymcplab-@lab.labinstance.id --subscription @lab.cloudsubscription.id`
 
-4. [] **Set the name suffix for Azure resources:**
+5. [] **Set the name suffix for Azure resources:**
 
   The name suffix will be added at the end of the resources deployed to Azure.
 
-	`azd env set NAME_SUFFIX @lab.labInstance.id`
+   `azd env set NAME_SUFFIX @lab.labInstance.id`
 
-5. [] **Provision and Deploy Resources:**
+6. [] **Provision and Deploy Resources:**
 
    Run the following command. This reads the infrastructure definition (*infra* folder, *main.bicep*) and begins creating the resources in Azure. 
    
+   `azd provision`
+
+   If prompted, select a location from the terminal to deploy the Azure resources.
+
    **Do not wait for it to complete.** 
    
-   It will run in the background. Proceed immediately to the next step while it runs.
-
-    Run  `azd provision` to provision all the Azure resources needed to run snippy. 
-
-    If prompted, select a location from the terminal to deploy the Azure resources.
-
+   It will run in the background. Proceed immediately to the next step while it runs. 
+   
     > [!knowledge] This command provisions Azure resources such as:
     >   * Azure Function App (using the scalable Flex Consumption plan)
     >   * Azure Storage Account (for Functions operations and state)
     >   * Azure Cosmos DB for NoSQL (pre-configured for vector search)
     >   * Azure AI Services (with *gpt-4o-mini* and *text-embedding-3-small* models deployed)
-    >   * Azure AI Foundry resources (Project, for AI Agents Service)
-    >   * Azure Key Vault (for secrets)
+    >   * Azure AI Foundry resources (Foundry projects)
     >   * Azure Log Analytics & Application Insights (for monitoring)
     >   * Durable Task Scheduler (for workflow orchestration)
+    >   * Managed Identity (for secure access to Azure resources)
 
     > [!hint] These resources are created within a new resource group named **rg-snippymcplab-@lab.labinstance.id**. You will deploy your application code to the Function App later using *azd deploy*.
 
@@ -267,7 +255,7 @@ Azure Functions provides a serverless platform for building AI-integrated micros
 
 ### 5.3 Review: Embeddings Input Binding
 
-1. [] Look at the decorator chain above *http_save_snippet* (line 105) and *mcp_save_snippet* (line 174)
+1. [] Look at the decorator chain above *http_save_snippet* (line 104) and *mcp_save_snippet* (line 180)
 
 2. [] **Examine the embeddings input binding:**
 
@@ -513,7 +501,13 @@ Let's first install the Python packages required by the Function App:
 
     !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-LocalSettings.png)
 
-5. [] (Optional) If for any reason the *local.settings.json* file wasn't properly generated or is missing values, you can manually run the generation script:
+5. [] **Only needed if settings are missing**
+
+   If for any reason the *local.settings.json* file wasn't properly generated or is missing values, you can manually run the generation script from the root directory:
+
+    ```powershell
+    cd $HOME\snippy\ # Or C:\Users\LabUser\snippy\
+    ```
 
     ```powershell
     # From the snippy root directory
@@ -536,17 +530,17 @@ The agent-framework-azurefunctions library requires the Durable Task emulator to
 
 2. [] Start the Docker Compose services in detached mode:
 
+	If prompted to allow network access, select **Allow** to continue.
+
     `docker compose up -d`
 
-    This starts the Durable Task emulator container which the agents will use for state persistence.
-
-    If prompted to allow network access, select **Allow** to continue.
+   This starts the Durable Task emulator container which the agents will use for state persistence.
 
 3. [] Verify the container is running:
 
     `docker compose ps`
 
-    You should see the durable task emulator service running.
+    You should see the durable task emulator service running as well as azurite.
 
 
 > [!note]
@@ -564,7 +558,14 @@ Now that *local.settings.json* points to your actual Azure resources provisioned
 
     `az login --use-device-code`
 
-    >[!note] This command will output a URL and a device code. Copy the code, **Ctrl+Click** the URL to open it, then paste the code when prompted to complete authentication.
+    > [!note] 
+    > This command will output a URL and a device code. 
+    >
+    > Copy the code - highlight, then **Ctrl+C**
+    >
+    > Open the URL - mouseover, then **Ctrl+Click** 
+    >
+    > Paste the code when prompted to complete authentication.
 
 2. [] Go back to the VS Code terminal and enter `1` to pick the subscription.
 
@@ -614,6 +615,7 @@ Now that *local.settings.json* points to your actual Azure resources provisioned
 > 
 > <br>
 
+===
 
 ### **10** - Explore MCP Tools in GitHub Copilot (Local Endpoint)
 
@@ -644,11 +646,14 @@ Now, connect GitHub Copilot Chat to your *locally running* Function App's MCP en
 
      !IMAGE[12a-mcp-ghcp-agent.png](instructions291323/12a-mcp-ghcp-agent.png)
 
-   - At the bottom of the chat panel, select **Select Tools...** (or select **Ctrl+Shift+/**)
+   - At the bottom of the chat panel, select the **Tools** icon
    
-       !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-MCP-Tools-Local.png)    
-   
+     !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-SelectTools.png)
+
    - Make sure *MCP Server: local-snippy* and all its tools are checked
+   
+   !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-MCP-Tools-Local.png)    
+
    - Select **Escape** or select **OK** to confirm your selection
 
 > [!knowledge] Troubleshooting MCP Server Connection Issues
@@ -681,13 +686,21 @@ Now, connect GitHub Copilot Chat to your *locally running* Function App's MCP en
 5. [] **Test the *save_snippet* Tool**:
    - [] Open any code file (e.g., **src/durable_agents.py**).
    - [] Select some interesting code sections (or it'll take the entire file as a snippet, which is fine, as well).
-   - [] In Copilot Chat, enter `#local-snippy save this snippet as ai-agents-service-usage`, then select **Enter** or **Send**.
+   - [] In Copilot Chat, enter 
+   
+     `#local-snippy save this snippet as ai-agents-service-usage` 
+   
+     select **Enter** or **Send**.
    - [] If prompted by Copilot to use the **save_snippet** tool, select **Allow**.
    
      !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-SaveSnippet-Local.png)
      
 6. [] **Test the *get_snippet* Tool**:
-   - [] In Copilot Chat, lets try explicity using the server and enter `#local-snippy get the snippet named ai-agents-service-usage`, then select **Enter** or **Send**.
+   - [] In Copilot Chat, enter 
+   
+   `#local-snippy get the snippet named ai-agents-service-usage`
+   
+   select **Enter** or **Send**.
    - [] Copilot will suggest using the **get_snippet** tool - Select **Allow**.
    
      !IMAGE[](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GetSnippet-Local.png)
@@ -732,7 +745,10 @@ Now you'll test the `generate_comprehensive_documentation` tool, which orchestra
    - Select **Allow** when Copilot asks to use the **generate_comprehensive_documentation** tool
 
 3. [] **Monitor the Orchestration**:
-   - Switch to your browser at `http://localhost:8082/`
+   - Switch to your browser at 
+   
+   `http://localhost:8082/`
+   
    - You should see a new orchestration instance appear in the dashboard
    - Watch as the orchestration progresses through multiple stages:
      - **DeepWiki Agent** generates initial documentation
@@ -756,7 +772,10 @@ Now you'll test the `generate_comprehensive_documentation` tool, which orchestra
      - All focused on MCP tools and vector search capabilities as requested
 
 6. [] **Review the Completed Orchestration in the Dashboard**:
-   - Return to the Durable Task Scheduler UI at `http://localhost:8082/`
+   - Return to the Durable Task Scheduler UI at 
+   
+   `http://localhost:8082/`
+   
    - Find your completed orchestration instance in the list (it should show **Completed** status)
    - Click on the orchestration to view its detailed execution history:
      - **Timeline view**: See the sequence of all agent calls and their durations
@@ -786,7 +805,9 @@ Now you'll test the `generate_comprehensive_documentation` tool, which orchestra
 
 You've implemented the code and verified it works locally against your provisioned cloud resources. Now, deploy the application code to the Azure Function App created by *azd provision*.
 
-1. []  Go back to the Terminal and stop the local Functions host if it's still running (**Ctrl+C** in the *func start* terminal - wait a few seconds).
+1. []  Go back to the Terminal and stop the local Functions host (View- > Terminal)
+ 
+   If it's still running - **Ctrl+C** in the *func start* terminal - wait a few seconds.
 
 2. []  Ensure your terminal is in the root *snippy* directory (the one containing *azure.yaml*).
 
@@ -807,7 +828,7 @@ You've implemented the code and verified it works locally against your provision
       * Deploys the code to the Azure Function App provisioned earlier.
       * Configures the application settings in the deployed Function App based on your *.azure/snippy-mcp-lab-@lab.labinstance.id/.env* file, ensuring it can connect to OpenAI, Cosmos DB, etc., in the cloud.
 
-4. []  Wait for the deployment to complete successfully. AZD will output the endpoints for your deployed application, including the Function App's base URL (e.g., *https://func-api-...azurewebsites.net*). Make a note of this URL.
+4. []  Wait for the deployment to complete successfully. AZD will output the endpoints for your deployed application, including the Function App's base URL (e.g., *https://func-api-...azurewebsites.net*). 
 
 ---
 
