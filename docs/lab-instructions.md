@@ -885,9 +885,15 @@ Finally, configure VS Code and Copilot Chat to use the tools running on your *de
     Repeat the tests from earlier, but this time with the *remote-snippy* server:
 
       * Select some code.
-      * Ask Copilot: `#remote-snippy save the selected snippet as my-cloud-mcp-test`
+      * Ask Copilot: 
+       
+      `#remote-snippy save the selected snippet as my-cloud-mcp-test`
+
       * Confirm the tool usage.
-      * Ask Copilot: `#remote-snippy get the snippet named my-cloud-mcp-test`
+      * Ask Copilot: 
+      
+      `#remote-snippy get the snippet named my-cloud-mcp-test`
+
       * Try other tools like **deep_wiki** as we did earlier.
 
     Verify that the tools work correctly by interacting with your deployed Azure Function App.
@@ -910,7 +916,7 @@ Now that the application is deployed to Azure, you can monitor the multi-agent o
 
     ```text
     https://dashboard.durabletask.io/subscriptions/{subscription-id}/schedulers/{dts-name}/taskhubs/{taskhub-name}?endpoint={encoded-endpoint}&tenantId={tenant-id}
-    ```
+    ``` 
 
 2. [] **Copy and open the dashboard URL**:
    - Copy the entire URL from the terminal output
