@@ -89,7 +89,7 @@ To use GitHub Copilot, sign in with the GitHub account provided in your lab envi
  
 After signing into GitHub, go back to VS Code and complete the Copilot setup:
   
-4. [ ] Click the **account icon** (bottom right) → **Sign in to use Copilot.**
+4. [ ] Click the **account icon** (bottom right) → **Sign in to use AI Features.**
 
    !IMAGE[SnippyLab-GH-VSCode-SignIn](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/SnippyLab-GH-VSCode-SignIn.png)
 
