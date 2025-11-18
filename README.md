@@ -80,7 +80,7 @@ The project ships with reproducible **azd** infrastructure, so `azd up` will sta
 
 ### Architecture Diagram
 
-![Snippy Architecture](images/Snippy-Architecture.png)
+![Snippy Architecture](images/Snippy-Architecture-L.png)
 
 ---
 
