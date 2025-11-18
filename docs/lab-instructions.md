@@ -31,7 +31,7 @@ You'll implement both patterns:
  
 This dual approach demonstrates how serverless functions can seamlessly integrate with modern AI workflows through standard protocols.
 
- !IMAGE[SnippyLab-Terminal.png](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/Snippy-Architecture.png)
+ !IMAGE[SnippyLab-Terminal.png](https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/Snippy-Architecture-V2.png)
 
 ===
 
@@ -41,7 +41,7 @@ This dual approach demonstrates how serverless functions can seamlessly integrat
 Your lab environment comes pre-configured with the necessary software:
 
 - **Visual Studio Code** - Your primary development environment
-- **Edge** - Browser with tabs for GitHub, Azure Portal, and Azure AI Foundry
+- **Edge** - Browser with tabs for GitHub, Azure Portal, and Microsoft Foundry
 - Python 3.12
 - **uv** package manager (faster alternative to pip)
 - Git for source control
@@ -53,10 +53,10 @@ Your lab environment comes pre-configured with the necessary software:
 From your lab environment's Desktop (or Taskbar), open **Edge - Snippy & Portal** shortcut, which opens three tabs you'll need:
 1. [] **Snippy Lab GitHub Repo:** Source code (*https://aka.ms/functions-mcp-lab*).
 2. [] **Azure Portal:** (*https://portal.azure.com*).
-3. [] **Azure AI Foundry:** (*https://ai.azure.com*).
+3. [] **Microsoft Foundry:** (*https://ai.azure.com*).
 
 > [!note]
-> When you open the Azure Portal and Azure Foundry tabs, you may see login pages. Don't worry about signing in yet - you'll receive the Azure credentials in **Step 4** when you begin the resource provisioning process. For now, you can leave these tabs open in the background.
+> When you open the Azure Portal and Microsoft Foundry tabs, you may see login pages. Don't worry about signing in yet - you'll receive the Azure credentials in **Step 4** when you begin the resource provisioning process. For now, you can leave these tabs open in the background.
 
 ===
 
@@ -167,7 +167,7 @@ Now, you'll use the Azure Developer CLI (azd) to *start* provisioning all the ne
     >   * Azure Storage Account (for Functions operations and state)
     >   * Azure Cosmos DB for NoSQL (pre-configured for vector search)
     >   * Azure AI Services (with *gpt-4o-mini* and *text-embedding-3-small* models deployed)
-    >   * Azure AI Foundry resources (Foundry projects)
+    >   * Microsoft Foundry resources (Foundry projects)
     >   * Azure Log Analytics & Application Insights (for monitoring)
     >   * Durable Task Scheduler (for workflow orchestration)
     >   * Managed Identity (for secure access to Azure resources)
