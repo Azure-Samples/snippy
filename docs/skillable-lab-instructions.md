@@ -3,6 +3,11 @@
 @lab.ActivityGroup(initialsurvey)
 
 ===
+> [!HELP]
+>If you need to reset your Temporary Access Password (TAP), click this button:
+>@lab.Activity(Automated1)
+>
+>TAP: +++@lab.Variable(tap)+++@lab.Activity(Automated2)
 
 Log in to the Windows 11 lab VM with the credentials below.
 
@@ -86,6 +91,12 @@ To use GitHub Copilot, sign in with the GitHub account provided in your lab envi
     |:---------|:---------|
     | Username | `@lab.CloudPortalCredential(User1).Username` |
     | Temporary Access Pass | `@lab.CloudPortalCredential(User1).TAP` |
+
+> [!HELP]
+>If you need to reset your Temporary Access Password (TAP), click this button:
+>@lab.Activity(Automated1)
+>
+>TAP: +++@lab.Variable(tap)+++
  
 After signing into GitHub, go back to VS Code and complete the Copilot setup:
   
@@ -480,7 +491,7 @@ Let's first install the Python packages required by the Function App:
 
 4. [] Install the required Python packages:
    
-    `uv pip install -r requirements.txt`
+    `$env:UV_HTTP_TIMEOUT=300; uv pip install -r requirements.txt`
 
 > [!note]
 > We'll start the Functions host after verifying that all required settings are available from the provisioning process.
