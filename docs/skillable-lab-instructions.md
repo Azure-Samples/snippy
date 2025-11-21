@@ -485,9 +485,9 @@ Let's first install the Python packages required by the Function App:
 
 3. [] Activate the virtual environment:
    
-    `.venv\\Scripts\\activate`
+    `.venv\Scripts\activate`
 
-    *(Your terminal prompt should now be prefixed with (.venv))*
+    *(Your terminal prompt should now be prefixed with **(.venv)**)*
 
 4. [] Install the required Python packages:
    
@@ -583,10 +583,12 @@ Now that *local.settings.json* points to your actual Azure resources provisioned
 2. [] In the same terminal where you activated the virtual environment in Step 6, ensure you're in the **snippy/src** directory:
 
     ```powershell
-    cd $HOME\snippy\src  # Or C:\Users\LabUser\snippy\src
+    cd $HOME\snippy\src
+    .venv\Scripts\activate
     ```
 
     Your terminal prompt should still show **(.venv)** indicating the virtual environment is active.
+    The activate command is included, just in case.
 
 2. [] Start the Azure Functions runtime locally (ensure your *venv* from Step 6 is still activated):
    
@@ -751,7 +753,7 @@ Now you'll test the `generate_comprehensive_documentation` tool, which orchestra
 2. [] **Trigger the Multi-Agent Orchestration**:
    - In GitHub Copilot Chat (with the **local-snippy** MCP server active), enter the following prompt:
    
-     `#local-snippy Generate comprehensive documentation with emphasis on the MCP tools, vector search capabilities and code style. Save in a new file called comprehensive-documentation.md`
+     `#local-snippy use the generate_comprehensive_documentation tool to create documentation and save it in a new file called comprehensive-documentation.md`
    
    - Select **Allow** when Copilot asks to use the **generate_comprehensive_documentation** tool
 
