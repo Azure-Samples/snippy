@@ -27,15 +27,11 @@ urlFragment: snippy
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=Azure-Samples/snippy&machine=basicLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json)
 [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/Azure-Samples/snippy)
 
-Snippy is an **Azure Functions**-based reference application that demonstrates how to build **MCP (Model Context Protocol) tools** that integrate with AI assistants like GitHub Copilot. The sample implements an intelligent *code-snippet service* featuring:
+Snippy is an **Azure Functions**-based reference application that demonstrates how to build **MCP (Model Context Protocol) tools** that integrate with AI assistants like GitHub Copilot. It showcases a modern serverless AI application architecture where Azure Functions serve as both traditional APIs and MCP-compatible tools that AI assistants can discover and use.
 
-* **MCP Tool Integration** – expose Azure Functions as discoverable tools for AI assistants
-* **Durable Agents** – create stateful AI agents using **Microsoft Agent Framework** with automatic state management
-* **Multi-Agent Orchestration** – coordinate DeepWiki and CodeStyle agents using **Durable Task Scheduler**
-* **Vector Search** – semantic retrieval using **Cosmos DB DiskANN** with Azure OpenAI embeddings
-* **Monitoring & Observability** – track orchestrations in real-time with DTS dashboard (local & cloud)
+![Snippy Architecture](images/Snippy-Architecture-V2-L.png)
 
-The project ships with reproducible **azd** infrastructure, so `azd up` will stand up the entire stack – Functions, Cosmos DB, Azure OpenAI, and Durable Task Scheduler – in a single command.
+The system uses **Durable Task Scheduler** to orchestrate multi-agent workflows, **Cosmos DB with vector indexing** for semantic code search, and **Azure OpenAI** for embeddings and LLM capabilities. The project ships with reproducible **azd** infrastructure—`azd up` deploys the entire stack and works with both local Docker-based emulators and Azure cloud services.
 
 > **Important Security Notice**
 > This repository is intended for learning and demonstration purposes. **Do not** deploy it to production without a thorough security review. At a minimum you should:
@@ -44,17 +40,7 @@ The project ships with reproducible **azd** infrastructure, so `azd up` will sta
  * Restrict network access to Azure services via Private Endpoints or service‑tags
  * Enable GitHub secret‑scanning and CI security tools
 
-[Features](#features) • [Architecture](#architecture) • [Lab Tutorial](#lab-tutorial) • [Getting Started](#getting-started) • [Guidance](#guidance)
-
----
-
-## Architecture
-
-Snippy demonstrates a modern serverless AI application architecture where Azure Functions serve as both traditional APIs and MCP-compatible tools that AI assistants can discover and use:
-
-![Snippy Architecture](images/Snippy-Architecture-V2-L.png)
-
-The system uses **Durable Task Scheduler** to orchestrate multi-agent workflows, **Cosmos DB with vector indexing** for semantic code search, and **Azure OpenAI** for embeddings and LLM capabilities. The same codebase runs locally with Docker-based emulators or deploys to Azure with `azd up`.
+[Features](#features) • [Lab Tutorial](#lab-tutorial) • [Getting Started](#getting-started) • [Guidance](#guidance)
 
 ---
 
