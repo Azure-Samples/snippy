@@ -41,20 +41,22 @@ The project ships with reproducible **azd** infrastructure, so `azd up` will sta
 > This repository is intended for learning and demonstration purposes. **Do not** deploy it to production without a thorough security review. At a minimum you should:
 >
 > * Swap connection strings for **Managed Identity** + **Azure Key Vault**
-> * Restrict network access to Azure services via Private Endpoints or service‑tags
-> * Enable GitHub secret‑scanning and CI security tools
+ * Restrict network access to Azure services via Private Endpoints or service‑tags
+ * Enable GitHub secret‑scanning and CI security tools
 
-[Features](#features) • [Architecture](#architecture-diagram) • [Getting Started](#getting-started) • [Guidance](#guidance)
+[Features](#features) • [Architecture](#architecture) • [Lab Tutorial](#lab-tutorial) • [Getting Started](#getting-started) • [Guidance](#guidance)
 
 ---
 
-## Recent Updates
+## Architecture
 
-* **Durable Task Scheduler (DTS) integration** for cloud orchestration and monitoring
-* **DTS dashboard scripts**: Quickly generate monitoring URLs for Azure deployments (`scripts/get-dts-dashboard-url.sh` and `.ps1`)
-* **Multi-agent orchestration**: Coordinate DeepWiki and CodeStyle agents with Durable Functions
-* **Enhanced monitoring**: View orchestration state in local DTS emulator or Azure DTS dashboard
+Snippy demonstrates a modern serverless AI application architecture where Azure Functions serve as both traditional APIs and MCP-compatible tools that AI assistants can discover and use:
 
+![Snippy Architecture](images/Snippy-Architecture-V2-L.png)
+
+The system uses **Durable Task Scheduler** to orchestrate multi-agent workflows, **Cosmos DB with vector indexing** for semantic code search, and **Azure OpenAI** for embeddings and LLM capabilities. The same codebase runs locally with Docker-based emulators or deploys to Azure with `azd up`.
+
+---
 
 ## Features
 
@@ -78,13 +80,31 @@ The project ships with reproducible **azd** infrastructure, so `azd up` will sta
 
 ---
 
-### Architecture Diagram
+## Lab Tutorial
 
-![Snippy Architecture](images/Snippy-Architecture-V2-L.png)
+New to Snippy? Start with our comprehensive **hands-on lab tutorial** that guides you through building the entire application from scratch:
+
+📚 **[Snippy Tutorial: Building an AI-Enhanced Code Snippet Manager](lab/TUTORIAL.md)**
+
+The tutorial covers:
+
+* **Step-by-step implementation** – Build the complete application with detailed explanations
+* **Code review exercises** – Understand MCP tools, durable agents, and vector search patterns
+* **Local development** – Set up and test with Docker-based emulators
+* **Azure deployment** – Provision and deploy to production with azd
+* **Multi-agent orchestration** – Monitor complex workflows with DTS dashboard
+* **End-to-end testing** – Test with REST Client, GitHub Copilot, and MCP tools
+
+**Additional Resources:**
+
+* [Quick Reference](lab/QUICK_REFERENCE.md) – Essential commands and common tasks
+* [Troubleshooting Guide](lab/TROUBLESHOOTING.md) – Solutions to common issues
+
+Whether you're new to Azure Functions, MCP tools, or AI agent development, the lab provides a structured learning path with hands-on experience.
 
 ---
 
-## Getting Started
+## Getting Started
 
 You can run Snippy in **GitHub Codespaces**, **VS Code Dev Containers**, or your **local environment**. The fastest path is Codespaces.
 
