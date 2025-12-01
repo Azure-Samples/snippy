@@ -32,9 +32,6 @@ Before starting, ensure you have:
 - **Azure Subscription** - [Create free account](https://azure.microsoft.com/free/)
 - **GitHub Account with Copilot** - [GitHub Copilot](https://github.com/features/copilot)
 
-### Cost Estimate
-Running this lab will incur Azure charges (approximately $5-10 for a few hours). Resources can be deleted after completion to stop charges.
-
 ## Quick Start
 
 1. **Clone this repository**

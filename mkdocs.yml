@@ -1,0 +1,97 @@
+site_name: Azure Functions MCP Workshop
+site_description: Build an AI-Enhanced Code Snippet Manager with Azure Functions and MCP
+site_author: Azure Samples
+site_url: https://azure-samples.github.io/snippy/
+
+repo_name: Azure-Samples/snippy
+repo_url: https://github.com/Azure-Samples/snippy
+edit_uri: edit/main/docs/
+
+# Use the docs directory
+docs_dir: docs
+
+theme:
+  name: material
+  logo: snippy-logo.png
+  favicon: snippy-logo.png
+  palette:
+    # Light mode
+    - scheme: default
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.integrate
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+nav:
+  - Homepage: README.md
+  - Tutorial:
+    - Overview: TUTORIAL.md
+    - Step 1 - Set Up Azure Resources: step-01.md
+    - Step 2 - Code Review: step-02.md
+    - Step 3 - Local Setup: step-03.md
+    - Step 4 - Verify Local Settings: step-04.md
+    - Step 5 - Start Docker Compose: step-05.md
+    - Step 6 - Run Functions Locally: step-06.md
+    - Step 7 - Explore MCP Tools (Local): step-07.md
+    - Step 8 - Test Multi-Agent Orchestration: step-08.md
+    - Step 9 - Deploy to Azure: step-09.md
+    - Step 10 - Connect to Cloud MCP: step-10.md
+    - Step 11 - Monitor Cloud Orchestration: step-11.md
+    - Step 12 - Clean Up Resources: step-12.md
+  - Quick Reference: QUICK_REFERENCE.md
+  - Troubleshooting: TROUBLESHOOTING.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Azure-Samples/snippy
+    - icon: fontawesome/brands/microsoft
+      link: https://azure.microsoft.com

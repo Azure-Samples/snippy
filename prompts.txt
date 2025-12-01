@@ -1,0 +1,7 @@
+#local-snippy save this snippet as ai-agents-service-usage
+#local-snippy get the snippet named ai-agents-service-usage
+#local-snippy use the generate_comprehensive_documentation tool to create documentation and save it in a new file called comprehensive-documentation.md
+
+#remote-snippy save the selected snippet as my-cloud-mcp-test
+#remote-snippy get the snippet named my-cloud-mcp-test
+#remote-snippy use the generate_comprehensive_documentation tool to create documentation and save it in a new file called cloud-documentation.md

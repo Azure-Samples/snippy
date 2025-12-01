@@ -58,3 +58,6 @@ __queuestorage__/
 AzuriteConfig
 
 src/nohup.out
+
+# MkDocs build output
+site/

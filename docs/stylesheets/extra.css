@@ -1,0 +1,7 @@
+/* Make the logo work better with the blue header */
+.md-header__button.md-logo img,
+.md-logo img {
+    filter: brightness(0) invert(1);
+    height: 2.5rem;
+    width: auto;
+}
