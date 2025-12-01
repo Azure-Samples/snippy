@@ -128,27 +128,6 @@ When complete, the Function App URL and MCP endpoint will be displayed. See the 
 
 ---
 
-## Architecture
-
-```mermaid
-flowchart LR
-  subgraph mcphosts["MCP Hosts & Clients (Your Computer)"]
-    Host["Host (VS Code / IDE)"]
-    Client["Client (GitHub Copilot)"]
-  end
-  Host --"MCP Protocol"--> Client
-  Client --"Tool Discovery"--> FunctionApp["Function App (MCP Server)"]
-  FunctionApp --"Orchestrate"--> DTS["Durable Task Scheduler"]
-  DTS --"Agent Calls"--> Agents["Durable Agents<br/>DeepWiki · CodeStyle"]
-  FunctionApp --"Vector Search"--> CosmosDB
-  Agents --"Vector Search"--> CosmosDB
-  FunctionApp --"Embeddings"--> OpenAI["Azure OpenAI"]
-  Agents --"LLM Calls"--> OpenAI
-  DTS --"Dashboard"--> User["Developer/Monitor"]
-```
-
----
-
 ## Guidance
 
 ### Region Availability
