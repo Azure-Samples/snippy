@@ -1,7 +1,7 @@
 <!--
 ---
 name: Snippy - Intelligent Code Snippet Service with MCP Tools
-description: A serverless code snippet management service using Azure Functions, Durable Functions, Azure OpenAI, Microsoft Fabric and Azure AI Agents.
+description: A serverless code snippet management service using Azure Functions, Durable Functions, Azure OpenAI, Durable Functions and Agent Framework.
 page_type: sample
 languages:
 - python
@@ -20,8 +20,7 @@ urlFragment: snippy
 -->
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Azure-Samples/snippy/main/.github/assets/snippy-logo-large.png" alt="Snippy logo" width="150"><br>
-  <b>Snippy · Intelligent Code-Snippet Service with MCP Tools</b>
+  <img src="https://raw.githubusercontent.com/Azure-Samples/snippy/main/images/snippy-logo.png" alt="Snippy">
 </p>
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=Azure-Samples/snippy&machine=basicLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json)
@@ -37,8 +36,8 @@ The system uses **Durable Task Scheduler** to orchestrate multi-agent workflows,
 > This repository is intended for learning and demonstration purposes. **Do not** deploy it to production without a thorough security review. At a minimum you should:
 >
 > * Swap connection strings for **Managed Identity** + **Azure Key Vault**
- * Restrict network access to Azure services via Private Endpoints or service‑tags
- * Enable GitHub secret‑scanning and CI security tools
+> * Restrict network access to Azure services via Private Endpoints or service‑tags
+> * Enable GitHub secret‑scanning and CI security tools
 
 [Features](#features) • [Lab Tutorial](#lab-tutorial) • [Getting Started](#getting-started) • [Guidance](#guidance)
 
@@ -70,7 +69,7 @@ The system uses **Durable Task Scheduler** to orchestrate multi-agent workflows,
 
 New to Snippy? Start with our comprehensive **hands-on lab tutorial** that guides you through building the entire application from scratch:
 
-📚 **[Snippy Tutorial: Building an AI-Enhanced Code Snippet Manager](lab/TUTORIAL.md)**
+📚 **[Snippy Tutorial: Building an AI-Enhanced Code Snippet Manager](https://azure-samples.github.io/snippy/)**
 
 The tutorial covers:
 
@@ -83,98 +82,54 @@ The tutorial covers:
 
 **Additional Resources:**
 
-* [Quick Reference](lab/QUICK_REFERENCE.md) – Essential commands and common tasks
-* [Troubleshooting Guide](lab/TROUBLESHOOTING.md) – Solutions to common issues
+* [Quick Reference](https://azure-samples.github.io/snippy/QUICK_REFERENCE/) – Essential commands and common tasks
+* [Troubleshooting Guide](https://azure-samples.github.io/snippy/TROUBLESHOOTING/) – Solutions to common issues
 
 Whether you're new to Azure Functions, MCP tools, or AI agent development, the lab provides a structured learning path with hands-on experience.
-
 ---
 
 ## Getting Started
 
-You can run Snippy in **GitHub Codespaces**, **VS Code Dev Containers**, or your **local environment**. The fastest path is Codespaces.
+### Prerequisites
 
-> Snippy requires an Azure region that supports *text‑embedding‑3‑small* (or a compatible embeddings model) **and** Azure AI Agents. The `azd` workflow prompts you for a region; we recommend **eastus** for best availability.
+* Azure subscription with permissions to create resources
+* [azd CLI](https://aka.ms/install-azd) installed
+* Choose your development environment:
+  - **GitHub Codespaces** (fastest, no local setup required)
+  - **VS Code Dev Containers** (requires [Docker Desktop](https://www.docker.com/products/docker-desktop))
+  - **Local development** (requires Python 3.11, Node 18+, Azure Functions Core Tools v4)
 
-### GitHub Codespaces
+### Deploy to Azure
 
-1. Click **Open in Codespaces** above (first badge) – the container build may take a few minutes.
-2. When the terminal appears, sign in:
+**Using GitHub Codespaces:**
 
-   ```bash
-   azd auth login --use-device-code
-   ```
-3. Launch the stack:
-
-   ```bash
-   azd up
-   ```
-4. Once deployment completes, copy the printed MCP URL and open GitHub Copilot Chat → *Agent* mode to try commands like “Save this snippet as **hello‑world**”.
-
-### VS Code Dev Containers
-
-Prerequisites: [Docker Desktop](https://www.docker.com/products/docker-desktop) + the [Dev Containers](https://aka.ms/vscode/dev-containers) extension.
-
-1. Click the **Dev Containers** badge (second badge) or run *Remote‑Containers: Open Repository in Container* from VS Code.
-2. Sign in and launch as shown for Codespaces:
-
-   ```bash
-   azd auth login
-   azd up
-   ```
-
-### Local Environment
-
-#### Prerequisites
-
-* [azd](https://aka.ms/install-azd) CLI
-* Python 3.11 + [`uv`](https://github.com/astral-sh/uv)
-* Node 18+ (for Functions Core Tools)
-* Azure Functions Core Tools v4 (`npm i -g azure-functions-core-tools@4 --unsafe-perm`)
-
-#### Quickstart
+Click the "Open in GitHub Codespaces" badge above, then run:
 
 ```bash
-# 1. Clone & init
-azd init --template Azure-Samples/snippy
-
-# 2. Sign in
-azd auth login
-
-# 3. Provision & deploy
+azd auth login --use-device-code
 azd up
 ```
 
-The CLI will automatically:
-
-* Create an Azure AD app registration for OAuth authentication
-* Provision all Azure resources (Functions, Cosmos DB, OpenAI, etc.)
-* Deploy the application code
-
-The CLI prints the Function App URL, MCP endpoint and system key when finished. To remove all resources later:
+**Using Dev Containers or Local Environment:**
 
 ```bash
-azd down --purge
+azd init --template Azure-Samples/snippy
+azd auth login
+azd up
 ```
 
-> **Note**: The first run automatically creates an Azure AD app registration with OAuth2 scope `access_as_user` for authentication.
+The `azd up` command will:
+* Prompt for an Azure region (recommend **eastus** or **swedencentral**)
+* Provision all resources (Functions, Cosmos DB, Azure OpenAI, DTS)
+* Create an Azure AD app registration for authentication
+* Deploy the application code
 
-### Local Development with Emulators
+When complete, the Function App URL and MCP endpoint will be displayed. See the [tutorial](https://azure-samples.github.io/snippy/) for detailed instructions on local development, testing with emulators, and monitoring orchestrations.
 
-For local development, Snippy uses the **Durable Task Scheduler (DTS) emulator** and **Azurite** for storage. 
+---
 
-#### With Docker (Recommended)
+## Architecture
 
-The easiest way to run both emulators:
-
-```bash
-# Start both emulators
-docker compose up -d
-
-# Generate local.settings.json from your Azure environment
-./scripts/generate-settings.sh
-
-# Run the Functions app
 ```mermaid
 flowchart LR
   subgraph mcphosts["MCP Hosts & Clients (Your Computer)"]
@@ -191,29 +146,6 @@ flowchart LR
   Agents --"LLM Calls"--> OpenAI
   DTS --"Dashboard"--> User["Developer/Monitor"]
 ```
-
----
-
-## Monitoring & Orchestration
-
-* **Local development**: Monitor orchestrations at <http://localhost:8082/> when using the DTS emulator
-* **Azure deployment**: Use the DTS dashboard scripts to generate monitoring URLs:
-  * Bash: `./scripts/get-dts-dashboard-url.sh`
-  * PowerShell: `.\scripts\get-dts-dashboard-url.ps1`
-* View multi-agent orchestration execution, including DeepWiki and CodeStyle agent calls
-* Track tool invocations, state transitions, and execution timelines
-
----
-
-```
-
-To switch back to DTS when Docker becomes available:
-
-```bash
-./scripts/switch-storage-backend.sh dts
-```
-
-For detailed setup instructions and troubleshooting, see [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md).
 
 ---
 
