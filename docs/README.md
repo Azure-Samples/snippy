@@ -27,6 +27,7 @@ Before starting, ensure you have:
 
 ### Recommended
 - **uv** package manager (faster than pip) - [Install](https://github.com/astral-sh/uv)
+- **REST Client Extension for VS Code** - [Install](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
 
 ### Required Accounts
 - **Azure Subscription** - [Create free account](https://azure.microsoft.com/free/)
